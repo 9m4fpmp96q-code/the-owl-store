@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: owl-store
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OWNER_EMAIL
+        sync: false
+      - key: SUPPLIER_EMAIL
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: BASE_URL
+        sync: false
