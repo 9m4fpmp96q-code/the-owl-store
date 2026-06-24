@@ -49,60 +49,104 @@ def send_email(to, subject, html):
     except Exception as e:
         print(f'Email error: {e}')
 
+EMAIL_BASE = """
+<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 16px">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+  <!-- HEADER -->
+  <tr><td style="background:#111;border-radius:16px 16px 0 0;padding:28px 40px;text-align:center">
+    <span style="font-size:28px;font-weight:900;letter-spacing:0.12em;color:#fff">OWL</span>
+  </td></tr>
+  <!-- BODY -->
+  <tr><td style="background:#fff;padding:40px;border-radius:0 0 16px 16px">
+    {body}
+  </td></tr>
+  <!-- FOOTER -->
+  <tr><td style="padding:24px;text-align:center;font-size:12px;color:#aaa">
+    OWL Accessories · Envío gratis a Europa<br/>
+    <a href="https://owl-store-u969.onrender.com" style="color:#aaa">owl-store.com</a>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>
+"""
+
+def _row(label, value):
+    return f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#888;width:120px;vertical-align:top">{label}</td><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:600">{value}</td></tr>'
+
 def notify_owner(order):
-    html = f"""
-    <h2>🛒 Nuevo pedido OWL #{order['id']}</h2>
-    <table style="font-family:sans-serif;font-size:14px">
-      <tr><td><b>Modelo</b></td><td>{order['model']} x{order['qty']}</td></tr>
-      <tr><td><b>Total</b></td><td>{order['price']}€</td></tr>
-      <tr><td><b>Cliente</b></td><td>{order['customer_name']}</td></tr>
-      <tr><td><b>Email</b></td><td>{order['customer_email']}</td></tr>
-      <tr><td><b>Dirección</b></td><td>{order['customer_address']}</td></tr>
+    body = f"""
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">🛒 Nuevo pedido #{order['id']}</h2>
+    <p style="margin:0 0 28px;color:#888;font-size:14px">Acción requerida: hacer el pedido al proveedor con la dirección de abajo.</p>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      {_row('Pedido', f"#{order['id']}")}
+      {_row('Modelo', f"{order['model']} x{order['qty']}")}
+      {_row('Total', f"<span style='color:#111;font-size:18px;font-weight:900'>{order['price']} €</span>")}
+      {_row('Cliente', order['customer_name'])}
+      {_row('Email', f"<a href='mailto:{order['customer_email']}' style='color:#111'>{order['customer_email']}</a>")}
+      {_row('Dirección', order['customer_address'])}
     </table>
-    <p style="margin-top:20px">
-      <b>Acción:</b> Entra en Alibaba y haz el pedido con esta dirección de envío.
-    </p>
+    <div style="margin-top:28px;background:#f5f5f5;border-radius:10px;padding:16px">
+      <p style="margin:0;font-size:13px;color:#555"><strong>Próximo paso:</strong> Entra en Alibaba/proveedor y realiza el pedido enviando a la dirección del cliente indicada arriba.</p>
+    </div>
     """
-    send_email(os.getenv('OWNER_EMAIL'), f'Nuevo pedido #{order["id"]} — {order["model"]}', html)
+    send_email(os.getenv('OWNER_EMAIL'), f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)', EMAIL_BASE.format(body=body))
 
 def notify_supplier(order):
-    html = f"""
-    <p>Hola,</p>
-    <p>Por favor envía el siguiente pedido:</p>
-    <table style="font-family:sans-serif;font-size:14px">
-      <tr><td><b>Producto</b></td><td>AirPods {order['model']} + funda silicona OWL</td></tr>
-      <tr><td><b>Cantidad</b></td><td>{order['qty']}</td></tr>
-      <tr><td><b>Enviar a</b></td><td>{order['customer_name']}<br>{order['customer_address']}</td></tr>
+    body = f"""
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">Nuevo pedido</h2>
+    <p style="margin:0 0 28px;color:#888;font-size:14px">Por favor, prepara y envía el siguiente pedido a la dirección indicada.</p>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      {_row('Producto', f"AirPods {order['model']} + Funda silicona OWL")}
+      {_row('Cantidad', str(order['qty']))}
+      {_row('Destinatario', order['customer_name'])}
+      {_row('Dirección envío', order['customer_address'])}
     </table>
-    <p>Gracias.</p>
+    <p style="margin-top:28px;font-size:14px;color:#555">Gracias por tu colaboración.</p>
     """
-    send_email(os.getenv('SUPPLIER_EMAIL'), f'Pedido nuevo — {order["model"]} x{order["qty"]}', html)
+    send_email(os.getenv('SUPPLIER_EMAIL'), f'Pedido — {order["model"]} x{order["qty"]}', EMAIL_BASE.format(body=body))
 
 def notify_customer(order):
-    html = f"""
-    <h2>¡Gracias por tu compra, {order['customer_name'].split()[0]}! 🦉</h2>
-    <p>Hemos recibido tu pedido:</p>
-    <table style="font-family:sans-serif;font-size:14px">
-      <tr><td><b>Producto</b></td><td>AirPods {order['model']} + Cover OWL</td></tr>
-      <tr><td><b>Total</b></td><td>{order['price']}€</td></tr>
-      <tr><td><b>Enviamos a</b></td><td>{order['customer_address']}</td></tr>
+    first_name = order['customer_name'].split()[0]
+    body = f"""
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px;margin-bottom:12px">🦉</div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:900;letter-spacing:-0.02em;color:#111">¡Gracias, {first_name}!</h2>
+      <p style="margin:0;color:#888;font-size:15px">Tu pedido ha sido confirmado y está en proceso.</p>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+      {_row('Producto', f"AirPods {order['model']} + Cover OWL + Mosquetón")}
+      {_row('Total', f"<span style='color:#111;font-size:18px;font-weight:900'>{order['price']} €</span>")}
+      {_row('Envío', 'Gratis')}
+      {_row('Dirección', order['customer_address'])}
+      {_row('Entrega estimada', '7–14 días hábiles')}
     </table>
-    <p>Te avisaremos cuando tu pedido esté en camino. Tiempo estimado: 7-14 días.</p>
-    <p>— El equipo OWL 🦉</p>
+    <div style="background:#f5f5f5;border-radius:10px;padding:20px;text-align:center;margin-bottom:28px">
+      <p style="margin:0;font-size:14px;color:#555">Te enviaremos otro email cuando tu pedido esté en camino con el número de seguimiento.</p>
+    </div>
+    <p style="text-align:center;font-size:13px;color:#aaa;margin:0">¿Alguna duda? Escríbenos a <a href="mailto:owl.accesories@gmail.com" style="color:#111">owl.accesories@gmail.com</a></p>
     """
-    send_email(order['customer_email'], '¡Pedido confirmado! — OWL Store', html)
+    send_email(order['customer_email'], f'¡Pedido confirmado! 🦉 — OWL Store', EMAIL_BASE.format(body=body))
 
 # ── STRIPE CHECKOUT ───────────────────────────────────────────────────────────
 @app.route('/create-checkout', methods=['POST'])
 def create_checkout():
-    data  = request.json
-    model = data.get('model', 'Gen4 ANC')
-    qty   = int(data.get('qty', 1))
-    price = PRICES.get(model, 35)
+    data = request.json
 
-    session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=[{
+    # Soporta tanto items[] (carrito completo) como model/qty (legado)
+    raw_items = data.get('items')
+    if not raw_items:
+        raw_items = [{'model': data.get('model', 'Gen4 ANC'), 'qty': int(data.get('qty', 1))}]
+
+    line_items = []
+    for item in raw_items:
+        model = item.get('model', 'Gen4 ANC')
+        qty   = int(item.get('qty', 1))
+        price = PRICES.get(model, 35)
+        line_items.append({
             'price_data': {
                 'currency': 'eur',
                 'product_data': {
@@ -113,11 +157,18 @@ def create_checkout():
                 'unit_amount': price * 100,
             },
             'quantity': qty,
-        }],
+        })
+
+    # Metadata: serializa todos los modelos para el webhook
+    meta_models = ','.join(f"{i['model']}x{i['qty']}" for i in raw_items)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
         mode='payment',
         shipping_address_collection={'allowed_countries': ['ES','FR','DE','IT','PT','BE','NL','AT','PL','GB']},
         customer_email=data.get('email'),
-        metadata={'model': model, 'qty': str(qty)},
+        metadata={'items': meta_models},
         success_url=os.getenv('BASE_URL') + '/success?session_id={CHECKOUT_SESSION_ID}',
         cancel_url=os.getenv('BASE_URL') + '/',
     )
@@ -139,10 +190,19 @@ def webhook():
         addr    = shipping.get('address', {})
         address = f"{addr.get('line1','')} {addr.get('line2','')} {addr.get('postal_code','')} {addr.get('city','')} {addr.get('country','')}".strip()
 
+        # Soporta metadata nueva (items) y legada (model/qty)
+        meta_items = s['metadata'].get('items')
+        if meta_items:
+            model_label = meta_items
+            qty_total   = sum(int(p.split('x')[1]) for p in meta_items.split(','))
+        else:
+            model_label = s['metadata'].get('model', 'Gen4 ANC')
+            qty_total   = int(s['metadata'].get('qty', 1))
+
         order = {
             'session_id':       s['id'],
-            'model':            s['metadata'].get('model','Gen4 ANC'),
-            'qty':              int(s['metadata'].get('qty', 1)),
+            'model':            model_label,
+            'qty':              qty_total,
             'price':            s['amount_total'] // 100,
             'customer_name':    shipping.get('name', s.get('customer_details',{}).get('name','')),
             'customer_email':   s.get('customer_email',''),
@@ -233,9 +293,29 @@ def admin():
 def index():
     return send_from_directory('.', 'index.html')
 
+@app.route('/envios')
+def envios():
+    return send_from_directory('.', 'envios.html')
+
+@app.route('/devoluciones')
+def devoluciones():
+    return send_from_directory('.', 'devoluciones.html')
+
+@app.route('/contacto')
+def contacto():
+    return send_from_directory('.', 'contacto.html')
+
+@app.route('/privacidad')
+def privacidad():
+    return send_from_directory('.', 'privacidad.html')
+
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory('.', filename)
+
+@app.errorhandler(404)
+def not_found(e):
+    return send_from_directory('.', '404.html'), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5003))
