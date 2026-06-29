@@ -717,16 +717,21 @@
     .model-btn {
       border: 1.5px solid var(--border);
       background: #fff;
-      border-radius: 10px;
-      padding: 10px 6px;
+      border-radius: 12px;
+      padding: 8px 6px 10px;
       cursor: pointer;
       text-align: center;
       transition: border-color .18s, background .18s, transform .18s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
 
     .model-btn:hover {
       border-color: #bbb;
       background: var(--bg2);
+      transform: translateY(-2px);
     }
 
     .model-btn.active {
@@ -735,9 +740,21 @@
       color: #fff;
     }
 
+    .model-thumb {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .model-btn.active .model-thumb {
+      filter: brightness(0.85);
+    }
+
     .model-btn .model-name {
       display: block;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.01em;
     }
@@ -745,7 +762,6 @@
     .model-btn .model-price {
       display: block;
       font-size: 11px;
-      margin-top: 3px;
       opacity: .65;
     }
 
@@ -1633,37 +1649,45 @@
       </div>
 
       <div class="model-selector">
-        <label>Modelo de auriculares: <span id="selected-model-label">Gen4 ANC — 35 €</span></label>
+        <label>Elige tu modelo: <span id="selected-model-label">Gen4 ANC — 35 €</span></label>
         <div class="model-grid">
           <button class="model-btn" data-model="Gen2" data-price="35">
+            <img class="model-thumb" src="img1.jpg" alt="Gen2"/>
             <span class="model-name">Gen2</span>
             <span class="model-price">35 €</span>
           </button>
           <button class="model-btn" data-model="Gen3" data-price="35">
+            <img class="model-thumb" src="img2.jpg" alt="Gen3"/>
             <span class="model-name">Gen3</span>
             <span class="model-price">35 €</span>
           </button>
           <button class="model-btn" data-model="Gen4" data-price="35">
+            <img class="model-thumb" src="img3.jpg" alt="Gen4"/>
             <span class="model-name">Gen4</span>
             <span class="model-price">35 €</span>
           </button>
           <button class="model-btn active" data-model="Gen4 ANC" data-price="35">
+            <img class="model-thumb" src="img6.jpg" alt="Gen4 ANC"/>
             <span class="model-name">Gen4 ANC</span>
             <span class="model-price">35 €</span>
           </button>
           <button class="model-btn" data-model="Pro2" data-price="35">
+            <img class="model-thumb" src="img4.jpg" alt="Pro2"/>
             <span class="model-name">Pro2</span>
             <span class="model-price">35 €</span>
           </button>
           <button class="model-btn" data-model="Pro2 ANC" data-price="37">
+            <img class="model-thumb" src="img5.jpg" alt="Pro2 ANC"/>
             <span class="model-name">Pro2 ANC</span>
             <span class="model-price">37 €</span>
           </button>
           <button class="model-btn" data-model="Pro3" data-price="37">
+            <img class="model-thumb" src="img7.jpg" alt="Pro3"/>
             <span class="model-name">Pro3</span>
             <span class="model-price">37 €</span>
           </button>
           <button class="model-btn" data-model="Pro3 ANC" data-price="39">
+            <img class="model-thumb" src="img8.jpg" alt="Pro3 ANC"/>
             <span class="model-name">Pro3 ANC</span>
             <span class="model-price">39 €</span>
           </button>
@@ -1967,17 +1991,16 @@
     nav.classList.toggle('scrolled', window.scrollY > 40);
   });
 
-  // ── FOTOS POR MODELO (fotos propias) ─────────────────────────────
-  const productPhotos = ['img6.jpg','img7.jpg','img2.jpg','img5.jpg','img3.jpg'];
+  // ── FOTOS POR MODELO (foto única por modelo) ─────────────────────
   const modelPhotos = {
-    'Gen2': [...productPhotos],
-    'Gen3': [...productPhotos],
-    'Gen4': [...productPhotos],
-    'Gen4 ANC': [...productPhotos],
-    'Pro2': [...productPhotos],
-    'Pro2 ANC': [...productPhotos],
-    'Pro3': [...productPhotos],
-    'Pro3 ANC': [...productPhotos],
+    'Gen2':     ['img1.jpg','img2.jpg','img3.jpg','img6.jpg','img7.jpg'],
+    'Gen3':     ['img2.jpg','img3.jpg','img1.jpg','img6.jpg','img7.jpg'],
+    'Gen4':     ['img3.jpg','img6.jpg','img2.jpg','img1.jpg','img7.jpg'],
+    'Gen4 ANC': ['img6.jpg','img7.jpg','img3.jpg','img2.jpg','img5.jpg'],
+    'Pro2':     ['img4.jpg','img5.jpg','img6.jpg','img7.jpg','img3.jpg'],
+    'Pro2 ANC': ['img5.jpg','img4.jpg','img7.jpg','img6.jpg','img2.jpg'],
+    'Pro3':     ['img7.jpg','img8.jpg','img5.jpg','img4.jpg','img6.jpg'],
+    'Pro3 ANC': ['img8.jpg','img9.jpg','img7.jpg','img5.jpg','img4.jpg'],
   };
   const _unused = {
     'Gen2_old': [
