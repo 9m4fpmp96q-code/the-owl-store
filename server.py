@@ -1,5 +1,6 @@
-import os, json, sqlite3, smtplib, stripe
-from flask import Flask, request, jsonify, send_from_directory, redirect
+import os, json, hmac, html, sqlite3, smtplib, stripe
+from functools import wraps
+from flask import Flask, request, jsonify, send_from_directory, redirect, Response
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -13,36 +14,128 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 PRICES = {'Gen2':35,'Gen3':35,'Gen4':35,'Gen4 ANC':35,'Pro2':35,'Pro2 ANC':37,'Pro3':37,'Pro3 ANC':39}
 
 # ── DATABASE ──────────────────────────────────────────────────────────────────
+# En producción usa Postgres (DATABASE_URL). En local, SQLite.
+# Render borra el disco del plan gratuito en cada reinicio: sin Postgres
+# los pedidos se pierden.
+DATABASE_URL = os.getenv('DATABASE_URL', '')
+USE_PG = DATABASE_URL.startswith('postgres')
+
+if USE_PG:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
 def get_db():
+    if USE_PG:
+        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     db = sqlite3.connect('orders.db')
     db.row_factory = sqlite3.Row
     return db
 
 def init_db():
-    with get_db() as db:
-        db.execute('''CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT UNIQUE,
-            model TEXT,
-            qty INTEGER,
-            price INTEGER,
-            customer_name TEXT,
-            customer_email TEXT,
-            customer_address TEXT,
-            status TEXT DEFAULT 'pagado',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )''')
+    schema_pg = '''CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        session_id TEXT UNIQUE,
+        model TEXT,
+        qty INTEGER,
+        price INTEGER,
+        customer_name TEXT,
+        customer_email TEXT,
+        customer_address TEXT,
+        status TEXT DEFAULT 'pagado',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )'''
+    schema_sqlite = '''CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT UNIQUE,
+        model TEXT,
+        qty INTEGER,
+        price INTEGER,
+        customer_name TEXT,
+        customer_email TEXT,
+        customer_address TEXT,
+        status TEXT DEFAULT 'pagado',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )'''
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(schema_pg if USE_PG else schema_sqlite)
+        conn.commit()
+    finally:
+        conn.close()
+
+def save_order(o):
+    """Guarda el pedido. Devuelve (id, es_nuevo).
+
+    Stripe reintenta los webhooks: si el pedido ya existía devolvemos
+    es_nuevo=False para no reenviar los emails por duplicado.
+    """
+    cols = (o['session_id'], o['model'], o['qty'], o['price'],
+            o['customer_name'], o['customer_email'], o['customer_address'])
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        if USE_PG:
+            cur.execute('''INSERT INTO orders
+                (session_id,model,qty,price,customer_name,customer_email,customer_address)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (session_id) DO NOTHING RETURNING id''', cols)
+            row = cur.fetchone()
+            if row:
+                conn.commit()
+                return row['id'], True
+            cur.execute('SELECT id FROM orders WHERE session_id = %s', (o['session_id'],))
+            existing = cur.fetchone()
+            conn.commit()
+            return (existing['id'] if existing else 0), False
+        cur.execute('''INSERT OR IGNORE INTO orders
+            (session_id,model,qty,price,customer_name,customer_email,customer_address)
+            VALUES (?,?,?,?,?,?,?)''', cols)
+        conn.commit()
+        if cur.rowcount:
+            return cur.lastrowid, True
+        cur.execute('SELECT id FROM orders WHERE session_id = ?', (o['session_id'],))
+        existing = cur.fetchone()
+        return (existing['id'] if existing else 0), False
+    finally:
+        conn.close()
+
+def all_orders():
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM orders ORDER BY created_at DESC')
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
 
 init_db()
 
+# ── AUTENTICACIÓN DEL PANEL ───────────────────────────────────────────────────
+def require_admin(f):
+    """Protege /admin. Sin ADMIN_PASSWORD el panel queda cerrado, nunca abierto."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        password = os.getenv('ADMIN_PASSWORD', '')
+        if not password:
+            return Response('Panel deshabilitado: falta configurar ADMIN_PASSWORD.', 503)
+        auth = request.authorization
+        ok = (auth and auth.username == 'owl'
+              and hmac.compare_digest(auth.password or '', password))
+        if not ok:
+            return Response('Acceso restringido', 401,
+                            {'WWW-Authenticate': 'Basic realm="OWL Admin"'})
+        return f(*args, **kwargs)
+    return wrapper
+
 # ── EMAIL ─────────────────────────────────────────────────────────────────────
-def send_email(to, subject, html):
+def send_email(to, subject, body_html):
     try:
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From']    = os.getenv('GMAIL_USER')
         msg['To']      = to
-        msg.attach(MIMEText(html, 'html'))
+        msg.attach(MIMEText(body_html, 'html'))
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(os.getenv('GMAIL_USER'), os.getenv('GMAIL_APP_PASSWORD'))
             server.sendmail(os.getenv('GMAIL_USER'), to, msg.as_string())
@@ -67,12 +160,19 @@ EMAIL_BASE = """
   <!-- FOOTER -->
   <tr><td style="padding:24px;text-align:center;font-size:12px;color:#aaa">
     OWL Accessories · Envío gratis a Europa<br/>
-    <a href="https://owl-store-u969.onrender.com" style="color:#aaa">owl-store.com</a>
+    <a href="{store_url}" style="color:#aaa">{store_url}</a>
   </td></tr>
 </table>
 </td></tr></table>
 </body></html>
 """
+
+def render_email(body):
+    """Monta el email con la URL real de la tienda (no una fija que caduca)."""
+    return EMAIL_BASE.format(body=body, store_url=os.getenv('BASE_URL', ''))
+
+def support_email():
+    return os.getenv('OWNER_EMAIL') or os.getenv('GMAIL_USER') or ''
 
 def _row(label, value):
     return f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#888;width:120px;vertical-align:top">{label}</td><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:600">{value}</td></tr>'
@@ -93,7 +193,7 @@ def notify_owner(order):
       <p style="margin:0;font-size:13px;color:#555"><strong>Próximo paso:</strong> Entra en Alibaba/proveedor y realiza el pedido enviando a la dirección del cliente indicada arriba.</p>
     </div>
     """
-    send_email(os.getenv('OWNER_EMAIL'), f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)', EMAIL_BASE.format(body=body))
+    send_email(os.getenv('OWNER_EMAIL'), f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)', render_email(body))
 
 def notify_supplier(order):
     body = f"""
@@ -107,10 +207,12 @@ def notify_supplier(order):
     </table>
     <p style="margin-top:28px;font-size:14px;color:#555">Gracias por tu colaboración.</p>
     """
-    send_email(os.getenv('SUPPLIER_EMAIL'), f'Pedido — {order["model"]} x{order["qty"]}', EMAIL_BASE.format(body=body))
+    send_email(os.getenv('SUPPLIER_EMAIL'), f'Pedido — {order["model"]} x{order["qty"]}', render_email(body))
 
 def notify_customer(order):
-    first_name = order['customer_name'].split()[0]
+    # Stripe puede devolver el nombre vacío: sin este guardo el email reventaba.
+    parts = (order['customer_name'] or '').split()
+    first_name = parts[0] if parts else 'de nuevo'
     body = f"""
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:48px;margin-bottom:12px">🦉</div>
@@ -127,9 +229,9 @@ def notify_customer(order):
     <div style="background:#f5f5f5;border-radius:10px;padding:20px;text-align:center;margin-bottom:28px">
       <p style="margin:0;font-size:14px;color:#555">Te enviaremos otro email cuando tu pedido esté en camino con el número de seguimiento.</p>
     </div>
-    <p style="text-align:center;font-size:13px;color:#aaa;margin:0">¿Alguna duda? Escríbenos a <a href="mailto:owl.accesories@gmail.com" style="color:#111">owl.accesories@gmail.com</a></p>
+    <p style="text-align:center;font-size:13px;color:#aaa;margin:0">¿Alguna duda? Escríbenos a <a href="mailto:{support_email()}" style="color:#111">{support_email()}</a></p>
     """
-    send_email(order['customer_email'], f'¡Pedido confirmado! 🦉 — OWL Store', EMAIL_BASE.format(body=body))
+    send_email(order['customer_email'], f'¡Pedido confirmado! 🦉 — OWL Store', render_email(body))
 
 # ── STRIPE CHECKOUT ───────────────────────────────────────────────────────────
 @app.route('/create-checkout', methods=['POST'])
@@ -199,26 +301,31 @@ def webhook():
             model_label = s['metadata'].get('model', 'Gen4 ANC')
             qty_total   = int(s['metadata'].get('qty', 1))
 
+        # Stripe Checkout solo rellena customer_email si se pre-cargó al crear
+        # la sesión. El email que escribe el comprador llega en customer_details.
+        details = s.get('customer_details') or {}
+        email   = details.get('email') or s.get('customer_email') or ''
+        name    = shipping.get('name') or details.get('name') or ''
+
         order = {
             'session_id':       s['id'],
             'model':            model_label,
             'qty':              qty_total,
             'price':            s['amount_total'] // 100,
-            'customer_name':    shipping.get('name', s.get('customer_details',{}).get('name','')),
-            'customer_email':   s.get('customer_email',''),
+            'customer_name':    name,
+            'customer_email':   email,
             'customer_address': address,
         }
 
-        with get_db() as db:
-            cur = db.execute(
-                'INSERT OR IGNORE INTO orders (session_id,model,qty,price,customer_name,customer_email,customer_address) VALUES (?,?,?,?,?,?,?)',
-                (order['session_id'],order['model'],order['qty'],order['price'],order['customer_name'],order['customer_email'],order['customer_address'])
-            )
-            order['id'] = cur.lastrowid
+        order['id'], is_new = save_order(order)
 
-        notify_owner(order)
-        notify_supplier(order)
-        notify_customer(order)
+        if is_new:
+            notify_owner(order)
+            notify_supplier(order)
+            if email:
+                notify_customer(order)
+            else:
+                print('Aviso: pedido sin email de cliente, no se envía confirmación.')
 
     return jsonify({'ok': True})
 
@@ -246,18 +353,22 @@ def success():
 
 # ── ADMIN PANEL ───────────────────────────────────────────────────────────────
 @app.route('/admin')
+@require_admin
 def admin():
-    with get_db() as db:
-        orders = db.execute('SELECT * FROM orders ORDER BY created_at DESC').fetchall()
+    orders = all_orders()
+    def esc(v):
+        # El nombre y la dirección los escribe el comprador: nunca se
+        # insertan crudos en el HTML.
+        return html.escape(str(v if v is not None else ''))
     rows = ''.join(f'''<tr>
-        <td>#{o["id"]}</td>
-        <td>{o["model"]} x{o["qty"]}</td>
-        <td><b>{o["price"]}€</b></td>
-        <td>{o["customer_name"]}</td>
-        <td>{o["customer_email"]}</td>
-        <td style="font-size:12px">{o["customer_address"]}</td>
-        <td><span style="background:{"#d4edda" if o["status"]=="pagado" else "#fff3cd"};padding:3px 10px;border-radius:20px;font-size:12px">{o["status"]}</span></td>
-        <td style="font-size:12px;color:#888">{o["created_at"][:16]}</td>
+        <td>#{esc(o["id"])}</td>
+        <td>{esc(o["model"])} x{esc(o["qty"])}</td>
+        <td><b>{esc(o["price"])}€</b></td>
+        <td>{esc(o["customer_name"])}</td>
+        <td>{esc(o["customer_email"])}</td>
+        <td style="font-size:12px">{esc(o["customer_address"])}</td>
+        <td><span style="background:{"#d4edda" if o["status"]=="pagado" else "#fff3cd"};padding:3px 10px;border-radius:20px;font-size:12px">{esc(o["status"])}</span></td>
+        <td style="font-size:12px;color:#888">{esc(o["created_at"])[:16]}</td>
     </tr>''' for o in orders)
     total = sum(o['price'] for o in orders)
     return f'''<!DOCTYPE html>
