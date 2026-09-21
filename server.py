@@ -6,12 +6,17 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 from datetime import datetime
 
+import cj
+import catalogo
+
 load_dotenv()
 
 app = Flask(__name__, static_folder='.')
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
-PRICES = {'Gen2':35,'Gen3':35,'Gen4':35,'Gen4 ANC':35,'Pro2':35,'Pro2 ANC':37,'Pro3':37,'Pro3 ANC':39}
+# Los precios salen del catálogo, que los calcula desde el coste real.
+# Para cambiarlos se toca catalogo.py, no esto.
+PRICES = dict(catalogo.PRECIOS_PACK)
 
 # ── DATABASE ──────────────────────────────────────────────────────────────────
 # En producción usa Postgres (DATABASE_URL). En local, SQLite.
@@ -56,10 +61,51 @@ def init_db():
         status TEXT DEFAULT 'pagado',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )'''
+    # Columnas añadidas después del primer despliegue. Se aplican una a una
+    # para que una base de datos ya existente se actualice sin perder nada.
+    extra = [
+        ('customer_zip',     'TEXT'),
+        ('customer_city',    'TEXT'),
+        ('customer_state',   'TEXT'),
+        ('customer_country', 'TEXT'),
+        ('customer_phone',   'TEXT'),
+        ('cj_order_id',      'TEXT'),
+        ('tracking',         'TEXT'),
+        ('coste',            'REAL'),
+    ]
     conn = get_db()
     try:
         cur = conn.cursor()
         cur.execute(schema_pg if USE_PG else schema_sqlite)
+        conn.commit()
+        for nombre, tipo in extra:
+            try:
+                cur.execute(f'ALTER TABLE orders ADD COLUMN {nombre} {tipo}')
+                conn.commit()
+            except Exception:
+                conn.rollback()      # ya existía; seguimos
+    finally:
+        conn.close()
+
+
+def guardar_cj_id(order_id, cj_order_id):
+    _actualiza_pedido(order_id, {'cj_order_id': cj_order_id})
+
+
+def guardar_tracking(order_id, tracking):
+    _actualiza_pedido(order_id, {'tracking': tracking})
+
+
+def _actualiza_pedido(order_id, campos):
+    if not campos:
+        return
+    marca = '%s' if USE_PG else '?'
+    sets = ', '.join(f'{k} = {marca}' for k in campos)
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(f'UPDATE orders SET {sets} WHERE id = {marca}',
+                    (*campos.values(), order_id))
         conn.commit()
     finally:
         conn.close()
@@ -70,15 +116,19 @@ def save_order(o):
     Stripe reintenta los webhooks: si el pedido ya existía devolvemos
     es_nuevo=False para no reenviar los emails por duplicado.
     """
-    cols = (o['session_id'], o['model'], o['qty'], o['price'],
-            o['customer_name'], o['customer_email'], o['customer_address'])
+    campos = ('session_id', 'model', 'qty', 'price', 'customer_name',
+              'customer_email', 'customer_address', 'customer_zip',
+              'customer_city', 'customer_state', 'customer_country',
+              'customer_phone', 'coste')
+    cols = tuple(o.get(c) for c in campos)
+    lista = ','.join(campos)
     conn = get_db()
     try:
         cur = conn.cursor()
         if USE_PG:
-            cur.execute('''INSERT INTO orders
-                (session_id,model,qty,price,customer_name,customer_email,customer_address)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            huecos = ','.join(['%s'] * len(campos))
+            cur.execute(f'''INSERT INTO orders ({lista})
+                VALUES ({huecos})
                 ON CONFLICT (session_id) DO NOTHING RETURNING id''', cols)
             row = cur.fetchone()
             if row:
@@ -88,9 +138,8 @@ def save_order(o):
             existing = cur.fetchone()
             conn.commit()
             return (existing['id'] if existing else 0), False
-        cur.execute('''INSERT OR IGNORE INTO orders
-            (session_id,model,qty,price,customer_name,customer_email,customer_address)
-            VALUES (?,?,?,?,?,?,?)''', cols)
+        huecos = ','.join(['?'] * len(campos))
+        cur.execute(f'INSERT OR IGNORE INTO orders ({lista}) VALUES ({huecos})', cols)
         conn.commit()
         if cur.rowcount:
             return cur.lastrowid, True
@@ -127,6 +176,64 @@ def require_admin(f):
                             {'WWW-Authenticate': 'Basic realm="OWL Admin"'})
         return f(*args, **kwargs)
     return wrapper
+
+# ── PROVEEDOR ─────────────────────────────────────────────────────────────────
+def _modelos_del_pedido(model_label):
+    """'Gen2x1,Pro3x2' -> [('Gen2', 1), ('Pro3', 2)]."""
+    salida = []
+    for trozo in (model_label or '').split(','):
+        trozo = trozo.strip()
+        if not trozo or 'x' not in trozo:
+            continue
+        modelo, _, cantidad = trozo.rpartition('x')
+        try:
+            salida.append((modelo.strip(), int(cantidad)))
+        except ValueError:
+            continue
+    return salida
+
+
+def coste_del_pedido(model_label):
+    """Lo que te cuesta servir este pedido, en euros. Para calcular el margen."""
+    total = 0.0
+    for modelo, cantidad in _modelos_del_pedido(model_label):
+        datos = catalogo.AURICULARES.get(modelo)
+        compra = (datos or {}).get('coste_compra', 0.0) + catalogo.FUNDA['coste_compra']
+        total += catalogo.coste_total(compra) * cantidad
+    return round(total, 2)
+
+
+def enviar_a_proveedor(order):
+    """Manda el pedido a CJ. Devuelve (enviado, explicación para el dueño).
+
+    Nunca lanza: si algo falla, el pedido sigue guardado y el dueño recibe
+    el aviso para hacerlo a mano.
+    """
+    if not cj.configurado():
+        return False, 'CJ sin configurar — pedido manual'
+
+    productos, sin_id = [], []
+    for modelo, cantidad in _modelos_del_pedido(order.get('model')):
+        vid = (catalogo.AURICULARES.get(modelo) or {}).get('cj_pid')
+        if vid:
+            productos.append({'vid': vid, 'quantity': cantidad})
+        else:
+            sin_id.append(modelo)
+
+    if sin_id:
+        return False, f'Sin id de CJ para: {", ".join(sin_id)} — pedido manual'
+
+    try:
+        ok, resultado = cj.crear_pedido(order, productos)
+    except Exception as e:                      # red, DNS, lo que sea
+        return False, f'Error inesperado contactando con CJ: {e}'
+
+    if not ok:
+        return False, resultado
+
+    guardar_cj_id(order['id'], resultado)
+    return True, f'Enviado a CJ (pedido {resultado})'
+
 
 # ── EMAIL ─────────────────────────────────────────────────────────────────────
 def send_email(to, subject, body_html):
@@ -177,10 +284,27 @@ def support_email():
 def _row(label, value):
     return f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#888;width:120px;vertical-align:top">{label}</td><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:600">{value}</td></tr>'
 
-def notify_owner(order):
+def notify_owner(order, auto_ok=False, auto_detalle=''):
+    if auto_ok:
+        aviso = ('<p style="margin:0 0 28px;color:#0a7d32;font-size:14px">'
+                 '<strong>No tienes que hacer nada.</strong> El pedido ya se ha '
+                 f'enviado al proveedor automáticamente. {html.escape(auto_detalle)}</p>')
+    else:
+        aviso = ('<p style="margin:0 0 28px;color:#b45309;font-size:14px">'
+                 '<strong>Acción requerida:</strong> hay que hacer el pedido al '
+                 f'proveedor a mano. Motivo: {html.escape(auto_detalle or "sin detalle")}.</p>')
+
+    ganancia = ''
+    if order.get('coste'):
+        d = catalogo.desglose(0, order['price'])
+        neto = round(order['price'] - order['coste'] - d['comision'], 2)
+        ganancia = _row('Te queda', f"<span style='color:#0a7d32'>{neto:.2f} €</span> "
+                                    f"<span style='color:#aaa;font-weight:400'>"
+                                    f"(coste {order['coste']:.2f} € + comisión {d['comision']:.2f} €)</span>")
+
     body = f"""
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">🛒 Nuevo pedido #{order['id']}</h2>
-    <p style="margin:0 0 28px;color:#888;font-size:14px">Acción requerida: hacer el pedido al proveedor con la dirección de abajo.</p>
+    {aviso}
     <table width="100%" cellpadding="0" cellspacing="0">
       {_row('Pedido', f"#{order['id']}")}
       {_row('Modelo', f"{order['model']} x{order['qty']}")}
@@ -188,12 +312,38 @@ def notify_owner(order):
       {_row('Cliente', order['customer_name'])}
       {_row('Email', f"<a href='mailto:{order['customer_email']}' style='color:#111'>{order['customer_email']}</a>")}
       {_row('Dirección', order['customer_address'])}
+      {ganancia}
     </table>
-    <div style="margin-top:28px;background:#f5f5f5;border-radius:10px;padding:16px">
-      <p style="margin:0;font-size:13px;color:#555"><strong>Próximo paso:</strong> Entra en Alibaba/proveedor y realiza el pedido enviando a la dirección del cliente indicada arriba.</p>
-    </div>
+    {'' if auto_ok else '''<div style="margin-top:28px;background:#fff7ed;border-radius:10px;padding:16px">
+      <p style="margin:0;font-size:13px;color:#7c2d12"><strong>Próximo paso:</strong> haz el pedido al proveedor con la dirección de arriba.</p>
+    </div>'''}
     """
     send_email(os.getenv('OWNER_EMAIL'), f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)', render_email(body))
+
+
+def notify_tracking(order):
+    """Email de 'tu pedido va en camino'. Prometido desde el principio y
+    nunca implementado: el cliente se quedaba esperando un aviso que no llegaba."""
+    tracking = order.get('tracking') or ''
+    if not (order.get('customer_email') and tracking):
+        return False
+    parts = (order.get('customer_name') or '').split()
+    nombre = parts[0] if parts else ''
+    body = f"""
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
+      <h2 style="margin:0 0 8px;font-size:24px;font-weight:900;color:#111">Tu pedido va en camino{', ' + html.escape(nombre) if nombre else ''}</h2>
+      <p style="margin:0;color:#888;font-size:15px">Ya ha salido del almacén.</p>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+      {_row('Pedido', f"#{order['id']}")}
+      {_row('Seguimiento', f"<span style='font-family:monospace'>{html.escape(tracking)}</span>")}
+      {_row('Dirección', html.escape(order.get('customer_address') or ''))}
+    </table>
+    <p style="text-align:center;font-size:13px;color:#aaa;margin:0">¿Alguna duda? Escríbenos a <a href="mailto:{support_email()}" style="color:#111">{support_email()}</a></p>
+    """
+    send_email(order['customer_email'], f'📦 Tu pedido OWL va en camino', render_email(body))
+    return True
 
 def notify_supplier(order):
     body = f"""
@@ -247,7 +397,7 @@ def create_checkout():
     for item in raw_items:
         model = item.get('model', 'Gen4 ANC')
         qty   = int(item.get('qty', 1))
-        price = PRICES.get(model, 35)
+        price = PRICES.get(model, catalogo.PRECIOS_PACK['Gen4 ANC'])
         line_items.append({
             'price_data': {
                 'currency': 'eur',
@@ -256,7 +406,9 @@ def create_checkout():
                     'description': 'Auriculares inalámbricos + funda personalizada OWL + mosquetón de acero',
                     'images': [],
                 },
-                'unit_amount': price * 100,
+                # Stripe cobra en céntimos enteros. Con precios decimales
+                # hay que redondear: 44.90 * 100 puede dar 4490.000000001.
+                'unit_amount': round(price * 100),
             },
             'quantity': qty,
         })
@@ -290,7 +442,12 @@ def webhook():
         s       = event['data']['object']
         shipping = s.get('shipping_details') or {}
         addr    = shipping.get('address', {})
-        address = f"{addr.get('line1','')} {addr.get('line2','')} {addr.get('postal_code','')} {addr.get('city','')} {addr.get('country','')}".strip()
+        # Guardamos la dirección entera para leerla, pero también por partes:
+        # el proveedor necesita CP, ciudad y provincia en campos separados.
+        calle   = ' '.join(x for x in (addr.get('line1'), addr.get('line2')) if x)
+        address = ' '.join(x for x in (
+            calle, addr.get('postal_code'), addr.get('city'), addr.get('country')
+        ) if x).strip()
 
         # Soporta metadata nueva (items) y legada (model/qty)
         meta_items = s['metadata'].get('items')
@@ -311,17 +468,29 @@ def webhook():
             'session_id':       s['id'],
             'model':            model_label,
             'qty':              qty_total,
-            'price':            s['amount_total'] // 100,
+            'price':            round(s['amount_total'] / 100, 2),
             'customer_name':    name,
             'customer_email':   email,
             'customer_address': address,
+            'customer_zip':     addr.get('postal_code') or '',
+            'customer_city':    addr.get('city') or '',
+            'customer_state':   addr.get('state') or '',
+            'customer_country': addr.get('country') or 'ES',
+            'customer_phone':   details.get('phone') or '',
+            'coste':            coste_del_pedido(model_label),
         }
 
         order['id'], is_new = save_order(order)
 
         if is_new:
-            notify_owner(order)
-            notify_supplier(order)
+            # El pedido ya está guardado. A partir de aquí nada puede perderlo:
+            # si el proveedor falla, se avisa al dueño para hacerlo a mano.
+            enviado, detalle = enviar_a_proveedor(order)
+            order['cj_estado'] = detalle
+
+            notify_owner(order, auto_ok=enviado, auto_detalle=detalle)
+            if not enviado:
+                notify_supplier(order)
             if email:
                 notify_customer(order)
             else:
@@ -352,6 +521,38 @@ def success():
 </div></body></html>'''
 
 # ── ADMIN PANEL ───────────────────────────────────────────────────────────────
+@app.route('/sync-envios')
+@require_admin
+def sync_envios():
+    """Pregunta al proveedor por los pedidos aún sin seguimiento y avisa
+    al cliente en cuanto lo tiene. Se puede abrir a mano o desde un cron."""
+    if not cj.configurado():
+        return jsonify({'ok': False, 'motivo': 'CJ sin configurar'}), 503
+
+    revisados, avisados, fallos = 0, 0, []
+    for o in all_orders():
+        if o.get('tracking') or not o.get('cj_order_id'):
+            continue
+        revisados += 1
+        try:
+            ok, datos = cj.estado_pedido(o['cj_order_id'])
+        except Exception as e:
+            fallos.append(f"#{o['id']}: {e}")
+            continue
+        if not ok:
+            fallos.append(f"#{o['id']}: {datos}")
+            continue
+        seguimiento = datos.get('seguimiento')
+        if seguimiento:
+            guardar_tracking(o['id'], seguimiento)
+            o['tracking'] = seguimiento
+            if notify_tracking(o):
+                avisados += 1
+
+    return jsonify({'ok': True, 'revisados': revisados,
+                    'clientes_avisados': avisados, 'fallos': fallos})
+
+
 @app.route('/admin')
 @require_admin
 def admin():
@@ -360,17 +561,34 @@ def admin():
         # El nombre y la dirección los escribe el comprador: nunca se
         # insertan crudos en el HTML.
         return html.escape(str(v if v is not None else ''))
+    def beneficio(o):
+        coste = o.get('coste') or 0
+        if not coste:
+            return None
+        comision = round((o['price'] or 0) * catalogo.STRIPE_PCT + catalogo.STRIPE_FIJO, 2)
+        return round((o['price'] or 0) - coste - comision, 2)
+
+    def envio_celda(o):
+        if o.get('tracking'):
+            return f'<span style="color:#0a7d32">{esc(o["tracking"])}</span>'
+        if o.get('cj_order_id'):
+            return '<span style="color:#888">en el proveedor</span>'
+        return '<span style="color:#b45309">manual</span>'
+
     rows = ''.join(f'''<tr>
         <td>#{esc(o["id"])}</td>
         <td>{esc(o["model"])} x{esc(o["qty"])}</td>
         <td><b>{esc(o["price"])}€</b></td>
+        <td style="color:#888">{f'{o["coste"]:.2f}€' if o.get("coste") else "—"}</td>
+        <td><b style="color:#0a7d32">{f'{beneficio(o):.2f}€' if beneficio(o) is not None else "—"}</b></td>
         <td>{esc(o["customer_name"])}</td>
-        <td>{esc(o["customer_email"])}</td>
         <td style="font-size:12px">{esc(o["customer_address"])}</td>
-        <td><span style="background:{"#d4edda" if o["status"]=="pagado" else "#fff3cd"};padding:3px 10px;border-radius:20px;font-size:12px">{esc(o["status"])}</span></td>
+        <td style="font-size:12px">{envio_celda(o)}</td>
         <td style="font-size:12px;color:#888">{esc(o["created_at"])[:16]}</td>
     </tr>''' for o in orders)
     total = sum(o['price'] for o in orders)
+    beneficios = [beneficio(o) for o in orders]
+    total_neto = round(sum(b for b in beneficios if b is not None), 2)
     return f'''<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Admin — OWL Store</title>
 <style>
@@ -389,13 +607,18 @@ def admin():
 <body>
 <div class="header"><span style="font-size:28px">🦉</span><h1>OWL Store — Panel de pedidos</h1></div>
 <div class="stats">
-  <div class="stat"><div class="n">{len(orders)}</div><div class="l">Pedidos totales</div></div>
-  <div class="stat"><div class="n">{total}€</div><div class="l">Ingresos totales</div></div>
-  <div class="stat"><div class="n">{sum(1 for o in orders if o["status"]=="pagado")}</div><div class="l">Pendientes de enviar</div></div>
+  <div class="stat"><div class="n">{len(orders)}</div><div class="l">Pedidos</div></div>
+  <div class="stat"><div class="n">{total}€</div><div class="l">Facturado</div></div>
+  <div class="stat"><div class="n" style="color:#0a7d32">{total_neto:.2f}€</div><div class="l">Te queda a ti</div></div>
+  <div class="stat"><div class="n">{sum(1 for o in orders if not o.get("tracking"))}</div><div class="l">Sin seguimiento</div></div>
+</div>
+<div style="padding:0 40px 16px">
+  <a href="/sync-envios" style="font-size:13px;color:#555">Actualizar seguimientos desde el proveedor →</a>
+  <span style="font-size:13px;color:#aaa;margin-left:12px">Proveedor: {'conectado' if cj.configurado() else 'sin configurar (pedidos manuales)'}</span>
 </div>
 <table>
-  <tr><th>#</th><th>Modelo</th><th>Precio</th><th>Cliente</th><th>Email</th><th>Dirección</th><th>Estado</th><th>Fecha</th></tr>
-  {rows or '<tr><td colspan="8" style="text-align:center;padding:40px;color:#888">No hay pedidos aún</td></tr>'}
+  <tr><th>#</th><th>Modelo</th><th>Precio</th><th>Coste</th><th>Beneficio</th><th>Cliente</th><th>Dirección</th><th>Envío</th><th>Fecha</th></tr>
+  {rows or '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">No hay pedidos aún</td></tr>'}
 </table>
 </body></html>'''
 

@@ -32,3 +32,11 @@ services:
         sync: false
       - key: BASE_URL
         sync: false
+      - key: CJ_EMAIL
+        sync: false
+      - key: CJ_API_KEY
+        sync: false
+      - key: CJ_ALMACEN
+        value: ES
+      - key: CJ_LOGISTICA
+        value: CJPacket Sensitive
