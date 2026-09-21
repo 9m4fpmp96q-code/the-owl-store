@@ -29,16 +29,23 @@ FUNDA = {
     'cj_pid':       None,
 }
 
+# Producto elegido el 2026-09-21: Xiaomi Redmi Buds 6 Play.
+# Marca real, 4.9 estrellas, +5.000 ventas, y sale de almacén en España,
+# así que llega en 48 h sin aduanas.
+#
+# OJO: NO tiene ANC. Su "reducción de ruido con IA" es para las llamadas
+# (ENC): limpia tu voz para quien te escucha, no cancela el ruido que tú
+# oyes. Filtrando por almacén español no existe ningún TWS con ANC real
+# por debajo de 20 €. No se puede prometer ANC con este producto.
 AURICULARES = {
-    'Gen2':     {'coste_compra': 10.00, 'cj_pid': None},   # ESTIMADO
-    'Gen3':     {'coste_compra': 10.00, 'cj_pid': None},   # ESTIMADO
-    'Gen4':     {'coste_compra': 10.00, 'cj_pid': None},   # ESTIMADO
-    'Gen4 ANC': {'coste_compra': 11.50, 'cj_pid': None},   # ESTIMADO
-    'Pro2':     {'coste_compra': 10.00, 'cj_pid': None},   # ESTIMADO
-    'Pro2 ANC': {'coste_compra': 11.50, 'cj_pid': None},   # ESTIMADO
-    'Pro3':     {'coste_compra': 12.00, 'cj_pid': None},   # ESTIMADO
-    'Pro3 ANC': {'coste_compra': 13.50, 'cj_pid': None},   # ESTIMADO
+    'Redmi Buds 6 Play': {'coste_compra': 14.18, 'cj_pid': None},
 }
+
+# Precio fijado a mano en 34,90 €, no por fórmula: el comprador puede
+# encontrar estos auriculares a 14 € buscando, así que el margen se sacrifica
+# para que el salto sea defendible. Lo que se cobra de más es el servicio —
+# entrega en 48 h, devolución real y atención en español.
+PRECIO_PACK_FIJO = 34.90
 
 
 def _redondea_comercial(precio):
@@ -94,10 +101,7 @@ PRECIO_FUNDA_SOLA = precio_sugerido(
 
 PRECIO_PACK_2_FUNDAS = 26.90
 
-PRECIOS_PACK = {
-    modelo: precio_sugerido(datos['coste_compra'] + FUNDA['coste_compra'])
-    for modelo, datos in AURICULARES.items()
-}
+PRECIOS_PACK = {modelo: PRECIO_PACK_FIJO for modelo in AURICULARES}
 
 
 def resumen():
