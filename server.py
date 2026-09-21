@@ -266,7 +266,7 @@ EMAIL_BASE = """
   </td></tr>
   <!-- FOOTER -->
   <tr><td style="padding:24px;text-align:center;font-size:12px;color:#aaa">
-    OWL Accessories · Envío gratis a Europa<br/>
+    OWL Accessories · Envío gratis desde España<br/>
     <a href="{store_url}" style="color:#aaa">{store_url}</a>
   </td></tr>
 </table>
@@ -374,7 +374,7 @@ def notify_customer(order):
       {_row('Total', f"<span style='color:#111;font-size:18px;font-weight:900'>{order['price']} €</span>")}
       {_row('Envío', 'Gratis')}
       {_row('Dirección', order['customer_address'])}
-      {_row('Entrega estimada', '7–14 días hábiles')}
+      {_row('Entrega estimada', '24–48 h en España · 3–5 días resto de Europa')}
     </table>
     <div style="background:#f5f5f5;border-radius:10px;padding:20px;text-align:center;margin-bottom:28px">
       <p style="margin:0;font-size:14px;color:#555">Te enviaremos otro email cuando tu pedido esté en camino con el número de seguimiento.</p>
@@ -516,7 +516,7 @@ def success():
   <div class="icon">🦉</div>
   <h1>¡Pedido confirmado!</h1>
   <p>Hemos recibido tu pedido y te hemos enviado un email de confirmación.<br>
-  Tu pack llegará en <strong>7-14 días</strong>.</p>
+  Sale de nuestro almacén en España: lo tienes en <strong>24-48 horas</strong>.</p>
   <a href="/">Volver a la tienda</a>
 </div></body></html>'''
 
