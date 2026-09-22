@@ -1191,6 +1191,17 @@
     /* En movil la barra no cabe: logo + tema + carrito + boton suman
        446 px en una pantalla de 375. Se oculta el boton de la barra,
        que es redundante — el heroe ya tiene uno mas grande y visible. */
+    /* En pantallas tactiles los botones del carrito eran de 26-36 px:
+       dificiles de acertar con el dedo, y estan en el paso de compra.
+       Apple y Google recomiendan 44 px. Se agranda el area pulsable
+       sin cambiar el aspecto visual del boton. */
+    @media (pointer: coarse), (max-width: 560px) {
+      .qty-btn { width: 34px; height: 34px; font-size: 17px; }
+      .cart-close { width: 44px; height: 44px; }
+      .cart-remove { padding: 12px; margin: -12px; font-size: 20px; }
+      .qty-control { gap: 4px; }
+    }
+
     @media (max-width: 560px) {
       nav { padding: 14px 16px; }
       .nav-cta { display: none; }
@@ -1642,8 +1653,8 @@
       el.innerHTML = `
         <div class="cart-item-img">${item.img ? `<img src="${item.img}" alt="${item.model}"/>` : `<span style="font-size:22px">🦉</span>`}</div>
         <div class="cart-item-info">
-          <div class="cart-item-name">Auriculares OWL ${item.model}</div>
-          <div class="cart-item-sub">Cover OWL + Mosquetón incluidos</div>
+          <div class="cart-item-name">${item.model}</div>
+          <div class="cart-item-sub">+ funda OWL y mosquetón</div>
           <div class="cart-item-controls">
             <button class="qty-btn" data-idx="${idx}" data-action="dec">−</button>
             <span class="qty-val">${item.qty}</span>
