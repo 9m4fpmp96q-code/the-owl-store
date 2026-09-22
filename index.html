@@ -1187,6 +1187,17 @@
       .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
       .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
     }
+
+    /* En movil la barra no cabe: logo + tema + carrito + boton suman
+       446 px en una pantalla de 375. Se oculta el boton de la barra,
+       que es redundante — el heroe ya tiene uno mas grande y visible. */
+    @media (max-width: 560px) {
+      nav { padding: 14px 16px; }
+      .nav-cta { display: none; }
+      .nav-right { gap: 10px; }
+      .hero { padding: 88px 20px 48px; }
+      section { padding: 56px 20px; }
+    }
   </style>
 </head>
 <body>
