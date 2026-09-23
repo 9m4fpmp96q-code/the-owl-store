@@ -578,7 +578,14 @@ def admin():
             return f'<span style="color:#0a7d32">{esc(o["tracking"])}</span>'
         if o.get('cj_order_id'):
             return '<span style="color:#888">en el proveedor</span>'
-        return '<span style="color:#b45309">manual</span>'
+        # Enviando desde casa no hay proveedor que devuelva el seguimiento:
+        # se escribe aquí al volver de Correos y el cliente recibe el aviso.
+        return (f'<form method="post" action="/admin/enviar" style="display:flex;gap:6px">'
+                f'<input type="hidden" name="id" value="{esc(o["id"])}">'
+                f'<input name="tracking" placeholder="Nº seguimiento" required '
+                f'style="width:118px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px">'
+                f'<button style="padding:7px 11px;border:0;border-radius:6px;background:#111;'
+                f'color:#fff;font-size:12px;font-weight:600;cursor:pointer">Enviado</button></form>')
 
     rows = ''.join(f'''<tr>
         <td>#{esc(o["id"])}</td>
@@ -626,6 +633,30 @@ def admin():
   {rows or '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">No hay pedidos aún</td></tr>'}
 </table>
 </body></html>'''
+
+@app.route('/admin/enviar', methods=['POST'])
+@require_admin
+def admin_enviar():
+    """Marca un pedido como enviado y avisa al cliente en el momento.
+
+    Es la pieza que faltaba para servir los pedidos uno mismo: hasta ahora
+    el seguimiento solo podía llegar del proveedor, así que enviando desde
+    casa el comprador se quedaba sin el aviso que le prometemos.
+    """
+    try:
+        order_id = int(request.form.get('id') or '')
+    except ValueError:
+        return redirect('/admin')
+
+    tracking = (request.form.get('tracking') or '').strip()
+    if not tracking:
+        return redirect('/admin')
+
+    guardar_tracking(order_id, tracking)
+    pedido = next((o for o in all_orders() if o['id'] == order_id), None)
+    if pedido:
+        notify_tracking(pedido)
+    return redirect('/admin')
 
 # ── PÁGINAS LEGALES ───────────────────────────────────────────────────────────
 # El aviso legal y las condiciones llevan datos fiscales que la LSSI obliga a
