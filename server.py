@@ -289,16 +289,38 @@ def support_email():
 def _row(label, value):
     return f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#888;width:120px;vertical-align:top">{label}</td><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:600">{value}</td></tr>'
 
-def notify_owner(order, auto_ok=False, auto_detalle=''):
-    if auto_ok:
-        aviso = ('<p style="margin:0 0 28px;color:#0a7d32;font-size:14px">'
-                 '<strong>No tienes que hacer nada.</strong> El pedido ya se ha '
-                 f'enviado al proveedor automáticamente. {html.escape(auto_detalle)}</p>')
-    else:
-        aviso = ('<p style="margin:0 0 28px;color:#b45309;font-size:14px">'
-                 '<strong>Acción requerida:</strong> hay que hacer el pedido al '
-                 f'proveedor a mano. Motivo: {html.escape(auto_detalle or "sin detalle")}.</p>')
+def _etiqueta_envio(order):
+    """Las líneas de la etiqueta, en el orden en que se escriben en el paquete."""
+    lineas = [order.get('customer_name'), order.get('customer_address')]
+    cp_ciudad = ' '.join(x for x in (order.get('customer_zip'),
+                                     order.get('customer_city')) if x)
+    lineas += [cp_ciudad, order.get('customer_state'),
+               order.get('customer_country'), order.get('customer_phone')]
+    # Lo escribe el comprador: se escapa siempre antes de meterlo en el HTML.
+    return [html.escape(str(l).strip()) for l in lineas if l and str(l).strip()]
 
+
+def _que_meter_en_la_caja(order):
+    """Checklist de lo que lleva el paquete.
+
+    El pack son dos artículos de dos proveedores distintos, así que el aviso
+    tiene que decirlo desglosado o se acaba enviando la caja a medias.
+    """
+    items = []
+    for modelo, cantidad in _modelos_del_pedido(order.get('model') or ''):
+        items.append((cantidad, modelo))
+        items.append((cantidad, catalogo.FUNDA['nombre']))
+    if not items:  # formato raro: mejor enseñar el texto crudo que nada
+        items = [(order.get('qty') or 1, order.get('model') or '—')]
+    return ''.join(
+        f'<tr><td style="padding:7px 0;font-size:15px;color:#111">'
+        f'<span style="color:#bbb">☐</span>&nbsp;&nbsp;<strong>{c} ×</strong> '
+        f'{html.escape(str(nombre))}</td></tr>' for c, nombre in items)
+
+
+def notify_owner(order, auto_ok=False, auto_detalle=''):
+    """Aviso de venta. Sirviendo los pedidos uno mismo, esto es el albarán:
+    qué meter en la caja y a dónde va, listo para trabajar desde el móvil."""
     ganancia = ''
     if order.get('coste'):
         d = catalogo.desglose(0, order['price'])
@@ -307,23 +329,54 @@ def notify_owner(order, auto_ok=False, auto_detalle=''):
                                     f"<span style='color:#aaa;font-weight:400'>"
                                     f"(coste {order['coste']:.2f} € + comisión {d['comision']:.2f} €)</span>")
 
+    if auto_ok:
+        # Solo cuando hay proveedor conectado: el paquete no pasa por tu casa.
+        cuerpo_tareas = ('<p style="margin:0 0 28px;color:#0a7d32;font-size:14px">'
+                         '<strong>No tienes que hacer nada.</strong> El pedido ya se ha '
+                         f'enviado al proveedor automáticamente. {html.escape(auto_detalle)}</p>')
+        siguiente = ''
+    else:
+        motivo = ('' if not auto_detalle else
+                  f'<p style="margin:0 0 20px;font-size:12px;color:#aaa">'
+                  f'Sin envío automático: {html.escape(auto_detalle)}</p>')
+        cuerpo_tareas = f"""{motivo}
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.1em;
+       text-transform:uppercase;color:#888">Qué meter en la caja</p>
+    <table width="100%" cellpadding="0" cellspacing="0"
+       style="background:#fafafa;border-radius:10px;padding:8px 16px;margin-bottom:26px">
+      {_que_meter_en_la_caja(order)}
+    </table>
+
+    <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.1em;
+       text-transform:uppercase;color:#888">A dónde va</p>
+    <div style="background:#fafafa;border-radius:10px;padding:16px 18px;margin-bottom:26px;
+       font-size:15px;line-height:1.65;color:#111">
+      {'<br/>'.join(_etiqueta_envio(order))}
+    </div>"""
+        panel = (os.getenv('BASE_URL', '').rstrip('/') or '') + '/admin'
+        siguiente = f"""<div style="margin-top:28px;background:#fff7ed;border-radius:10px;padding:18px">
+      <p style="margin:0 0 12px;font-size:13px;color:#7c2d12"><strong>Al volver de Correos:</strong>
+      entra en el panel y escribe el número de seguimiento. El comprador recibe
+      el aviso de que va en camino en ese momento.</p>
+      <a href="{html.escape(panel)}" style="display:inline-block;background:#111;color:#fff;
+         text-decoration:none;font-size:13px;font-weight:700;padding:10px 16px;border-radius:8px">
+         Abrir el panel →</a>
+    </div>"""
+
     body = f"""
-    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">🛒 Nuevo pedido #{order['id']}</h2>
-    {aviso}
+    <h2 style="margin:0 0 20px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">🛒 Nuevo pedido #{order['id']}</h2>
+    {cuerpo_tareas}
     <table width="100%" cellpadding="0" cellspacing="0">
       {_row('Pedido', f"#{order['id']}")}
-      {_row('Modelo', f"{order['model']} x{order['qty']}")}
       {_row('Total', f"<span style='color:#111;font-size:18px;font-weight:900'>{order['price']} €</span>")}
-      {_row('Cliente', order['customer_name'])}
-      {_row('Email', f"<a href='mailto:{order['customer_email']}' style='color:#111'>{order['customer_email']}</a>")}
-      {_row('Dirección', order['customer_address'])}
+      {_row('Email', f"<a href='mailto:{html.escape(str(order.get('customer_email') or ''))}' style='color:#111'>{html.escape(str(order.get('customer_email') or ''))}</a>")}
       {ganancia}
     </table>
-    {'' if auto_ok else '''<div style="margin-top:28px;background:#fff7ed;border-radius:10px;padding:16px">
-      <p style="margin:0;font-size:13px;color:#7c2d12"><strong>Próximo paso:</strong> haz el pedido al proveedor con la dirección de arriba.</p>
-    </div>'''}
+    {siguiente}
     """
-    send_email(os.getenv('OWNER_EMAIL'), f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)', render_email(body))
+    send_email(os.getenv('OWNER_EMAIL'),
+               f'🛒 Nuevo pedido #{order["id"]} — {order["model"]} ({order["price"]}€)',
+               render_email(body))
 
 
 def notify_tracking(order):
