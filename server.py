@@ -279,7 +279,12 @@ def render_email(body):
     return EMAIL_BASE.format(body=body, store_url=os.getenv('BASE_URL', ''))
 
 def support_email():
-    return os.getenv('OWNER_EMAIL') or os.getenv('GMAIL_USER') or ''
+    """Correo público de la tienda. OJO: esto lo ve el cliente.
+
+    OWNER_EMAIL es el correo personal del dueño y solo sirve para los avisos
+    internos de pedido nuevo; aquí no pinta nada.
+    """
+    return os.getenv('GMAIL_USER') or ''
 
 def _row(label, value):
     return f'<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#888;width:120px;vertical-align:top">{label}</td><td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:600">{value}</td></tr>'
@@ -622,6 +627,56 @@ def admin():
 </table>
 </body></html>'''
 
+# ── PÁGINAS LEGALES ───────────────────────────────────────────────────────────
+# El aviso legal y las condiciones llevan datos fiscales que la LSSI obliga a
+# publicar antes de vender. Se rellenan desde variables de entorno para tocarlos
+# en un sitio solo. Si falta alguno, la página lo dice en alto: mejor enseñar
+# que está incompleta que publicar un dato en blanco como si no hiciera falta.
+DATOS_FISCALES = (
+    ('NOMBRE',    'EMPRESA_NOMBRE',    'el nombre o razón social del titular'),
+    ('NIF',       'EMPRESA_NIF',       'el NIF'),
+    ('DOMICILIO', 'EMPRESA_DOMICILIO', 'el domicilio'),
+)
+
+def _enumera(items):
+    """une('a','b','c') -> "a, b y c". Para que el aviso se lea como una frase."""
+    if len(items) <= 1:
+        return ''.join(items)
+    return ', '.join(items[:-1]) + ' y ' + items[-1]
+
+def datos_fiscales_completos():
+    return all(os.getenv(var, '').strip() for _, var, _ in DATOS_FISCALES)
+
+def render_legal(filename):
+    """Sirve una página legal con los datos del titular sustituidos."""
+    # Ruta absoluta: el proceso no siempre arranca desde la carpeta del proyecto.
+    ruta = os.path.join(app.root_path, filename)
+    with open(ruta, encoding='utf-8') as f:
+        pagina = f.read()
+
+    faltan, valores = [], {}
+    for marca, var, etiqueta in DATOS_FISCALES:
+        valor = os.getenv(var, '').strip()
+        if valor:
+            valores[marca] = html.escape(valor)
+        else:
+            faltan.append(etiqueta)
+            valores[marca] = f'<span class="falta">[pendiente: {html.escape(etiqueta)}]</span>'
+
+    valores['EMAIL']   = html.escape(support_email() or 'theowlstore26@gmail.com')
+    valores['DOMINIO'] = html.escape(os.getenv('BASE_URL', '').split('//')[-1].rstrip('/'))
+    # La fecha sale del archivo, no de hoy: si no se ha tocado, no se ha actualizado.
+    valores['FECHA']   = datetime.fromtimestamp(os.path.getmtime(ruta)).strftime('%d/%m/%Y')
+    valores['AVISO_PENDIENTE'] = '' if not faltan else (
+        '<div class="pendiente"><p><strong>Esta página está incompleta.</strong> '
+        f'Falta {_enumera(faltan)}. La ley obliga a publicar estos datos antes '
+        'de vender a distancia, así que la tienda no debería aceptar pedidos '
+        'reales hasta que estén puestos.</p></div>')
+
+    for marca, valor in valores.items():
+        pagina = pagina.replace('{{' + marca + '}}', valor)
+    return pagina
+
 # ── STATIC FILES ──────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
@@ -643,8 +698,22 @@ def contacto():
 def privacidad():
     return send_from_directory('.', 'privacidad.html')
 
+@app.route('/aviso-legal')
+def aviso_legal():
+    return render_legal('aviso-legal.html')
+
+@app.route('/terminos')
+def terminos():
+    return render_legal('terminos.html')
+
+LEGALES = {'aviso-legal.html': '/aviso-legal', 'terminos.html': '/terminos'}
+
 @app.route('/<path:filename>')
 def static_files(filename):
+    # Sin esto el catch-all serviría la plantilla en crudo, con los
+    # marcadores {{NIF}} a la vista del cliente.
+    if filename in LEGALES:
+        return redirect(LEGALES[filename])
     return send_from_directory('.', filename)
 
 @app.errorhandler(404)

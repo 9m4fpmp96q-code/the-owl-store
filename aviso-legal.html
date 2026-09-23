@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Devoluciones y Garantía — OWL Store</title>
+  <title>Aviso legal — OWL Store</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -32,9 +32,18 @@
     .card p,.card li{font-size:15px;color:#555;line-height:1.7}
     [data-theme="dark"] .card p,[data-theme="dark"] .card li{color:#999}
     .card ul{padding-left:20px;display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .badge{display:inline-block;background:#111;color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;margin-bottom:16px}
-    [data-theme="dark"] .badge{background:#f0f0f0;color:#111}
-    @media(max-width:600px){nav{padding:16px 20px}main{padding:100px 16px 60px}}
+    .datos{list-style:none;padding:0;display:flex;flex-direction:column;gap:14px;margin-top:8px}
+    .datos li{display:flex;flex-wrap:wrap;gap:4px 12px}
+    .datos b{font-size:13px;font-weight:600;color:#888;min-width:150px;text-transform:uppercase;letter-spacing:0.06em}
+    [data-theme="dark"] .datos b{color:#666}
+    .datos span{font-size:15px;color:#111;font-weight:500}
+    [data-theme="dark"] .datos span{color:#f0f0f0}
+    .pendiente{background:#fff4e5;border:1px solid #f0c48a;border-radius:16px;padding:20px 24px;margin-bottom:28px}
+    .pendiente p{font-size:14px;color:#8a5200;line-height:1.7}
+    [data-theme="dark"] .pendiente{background:#2a1c05;border-color:#5c4210}
+    [data-theme="dark"] .pendiente p{color:#e8b76a}
+    .falta{color:#b45309;font-weight:700}
+    @media(max-width:600px){nav{padding:16px 20px}main{padding:100px 16px 60px}.datos b{min-width:0;width:100%}}
   </style>
 </head>
 <body>
@@ -55,43 +64,37 @@
   </div>
 </nav>
 <main>
-  <div class="page-label">Información</div>
-  <h1>Devoluciones<br/>y Garantía</h1>
+  <div class="page-label">Legal</div>
+  <h1>Aviso<br/>legal</h1>
+  {{AVISO_PENDIENTE}}
   <div class="card">
-    <span class="badge">14 días · sin dar explicaciones</span>
-    <h2>Si has cambiado de opinión</h2>
-    <p>Tienes <strong>14 días naturales</strong> desde que recibes el pedido para devolverlo, <strong>sin tener que justificar por qué</strong>. No hace falta que esté defectuoso ni que nos convenzas de nada: es tu derecho por comprar a distancia.</p>
-    <p style="margin-top:12px">Escríbenos a <strong>theowlstore26@gmail.com</strong> con tu número de pedido y te damos la dirección de envío. Los <strong>gastos de devolverlo corren por tu cuenta</strong> en este caso.</p>
-    <p style="margin-top:12px">Te devolvemos <strong>todo lo que pagaste</strong> en un máximo de 14 días desde que nos avisas, por el mismo medio con el que pagaste.</p>
-  </div>
-  <div class="card">
-    <span class="badge">3 años</span>
-    <h2>Si el producto falla</h2>
-    <p>Todos los productos tienen <strong>3 años de garantía legal</strong> desde la entrega. Si no funciona, no se corresponde con lo que anunciamos o falla antes de tiempo, lo reparamos o lo cambiamos sin coste. Si eso no lo arregla, te devolvemos el dinero.</p>
-    <p style="margin-top:12px">Durante los <strong>2 primeros años no tienes que demostrar nada</strong>: se da por hecho que el defecto ya venía de fábrica. <strong>El envío lo pagamos nosotros.</strong></p>
-  </div>
-  <div class="card">
-    <h2>¿Qué cubre la garantía?</h2>
-    <ul>
-      <li>Defectos de fabricación en los auriculares</li>
-      <li>Fallos en la funda OWL (costuras, silicona defectuosa)</li>
-      <li>Mosquetón roto o defectuoso al llegar</li>
-      <li>Que el producto no se corresponda con lo descrito en la web</li>
+    <h2>Titular del sitio web</h2>
+    <p>En cumplimiento del artículo 10 de la Ley 34/2002, de servicios de la sociedad de la información y de comercio electrónico (LSSI-CE), se hacen constar los siguientes datos:</p>
+    <ul class="datos">
+      <li><b>Titular</b><span>{{NOMBRE}}</span></li>
+      <li><b>NIF</b><span>{{NIF}}</span></li>
+      <li><b>Domicilio</b><span>{{DOMICILIO}}</span></li>
+      <li><b>Email</b><span>{{EMAIL}}</span></li>
+      <li><b>Sitio web</b><span>{{DOMINIO}}</span></li>
+      <li><b>Actividad</b><span>Venta al por menor de accesorios y auriculares por internet</span></li>
     </ul>
   </div>
   <div class="card">
-    <h2>¿Qué NO cubre?</h2>
-    <ul>
-      <li>Daños por uso incorrecto o golpes</li>
-      <li>Desgaste normal del producto</li>
-      <li>Daños por agua o humedad</li>
-    </ul>
-    <p style="margin-top:12px">Esto son límites de la garantía por defecto de fábrica. No afectan a los 14 días de devolución libre de arriba.</p>
+    <h2>Condiciones de uso</h2>
+    <p>El acceso a este sitio es gratuito y supone aceptar este aviso legal. El titular puede modificar en cualquier momento el contenido y los productos ofrecidos, así como estas condiciones.</p>
+    <p style="margin-top:12px">Queda prohibido el uso del sitio con fines ilícitos o que puedan dañar el sistema, así como la reproducción del contenido sin autorización.</p>
   </div>
   <div class="card">
-    <h2>¿Cómo lo pido?</h2>
-    <p>Escríbenos a <strong>theowlstore26@gmail.com</strong> con tu número de pedido. Si es por un defecto, añade fotos. Te respondemos en menos de 48 h con las instrucciones.</p>
-    <p style="margin-top:12px">El detalle legal completo está en las <a href="/terminos" style="color:inherit;font-weight:600">condiciones de contratación</a>, incluido el formulario oficial de desistimiento.</p>
+    <h2>Propiedad intelectual</h2>
+    <p>El nombre OWL, el logotipo, los textos y el diseño de este sitio pertenecen a su titular. Las marcas de los fabricantes de los productos que se venden pertenecen a sus respectivos propietarios y se citan únicamente para identificar el producto.</p>
+  </div>
+  <div class="card">
+    <h2>Responsabilidad</h2>
+    <p>El titular no se hace responsable de los daños derivados de un fallo de disponibilidad del sitio ni del uso que se haga de los contenidos. Si detectas un error en la información de un producto, escríbenos a <strong>{{EMAIL}}</strong> y lo corregimos.</p>
+  </div>
+  <div class="card">
+    <h2>Legislación aplicable</h2>
+    <p>Este aviso legal se rige por la ley española. Para las compras, consulta las <a href="/terminos" style="color:inherit;font-weight:600">condiciones de contratación</a> y la <a href="/privacidad" style="color:inherit;font-weight:600">política de privacidad</a>.</p>
   </div>
 </main>
 <script>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Condiciones de contratación — OWL Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#f7f6f3;color:#111;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+    [data-theme="dark"] body{background:#0a0a0a;color:#f0f0f0}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;background:rgba(247,246,243,0.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,0.09);transition:background .3s,border-color .3s}
+    [data-theme="dark"] nav{background:rgba(10,10,10,0.92);border-color:rgba(255,255,255,0.09)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#111;transition:color .3s}
+    [data-theme="dark"] .nav-logo{color:#f0f0f0}
+    .nav-logo svg{width:28px;height:28px}
+    .nav-logo span{font-size:18px;font-weight:800;letter-spacing:0.12em}
+    .nav-right{display:flex;align-items:center;gap:12px}
+    a.back{display:inline-flex;align-items:center;gap:8px;color:#888;text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+    a.back:hover{color:#111}
+    [data-theme="dark"] a.back:hover{color:#f0f0f0}
+    .theme-btn{background:none;border:1.5px solid rgba(0,0,0,0.12);border-radius:100px;width:36px;height:36px;cursor:pointer;font-size:16px;transition:background .2s,border-color .3s}
+    [data-theme="dark"] .theme-btn{border-color:rgba(255,255,255,0.12)}
+    main{max-width:720px;margin:0 auto;padding:120px 24px 80px}
+    .page-label{font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#888;margin-bottom:16px}
+    [data-theme="dark"] .page-label{color:#555}
+    h1{font-size:clamp(32px,5vw,52px);font-weight:900;letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px}
+    .intro{font-size:15px;color:#666;line-height:1.7;margin-bottom:40px;max-width:560px}
+    [data-theme="dark"] .intro{color:#888}
+    .card{background:#fff;border-radius:20px;padding:32px;margin-bottom:20px;border:1px solid rgba(0,0,0,0.07);transition:background .3s,border-color .3s}
+    [data-theme="dark"] .card{background:#111;border-color:rgba(255,255,255,0.07)}
+    .card h2{font-size:18px;font-weight:700;margin-bottom:12px;letter-spacing:-0.02em}
+    .card h3{font-size:15px;font-weight:700;margin:20px 0 8px}
+    .card p,.card li{font-size:15px;color:#555;line-height:1.7}
+    [data-theme="dark"] .card p,[data-theme="dark"] .card li{color:#999}
+    .card ul,.card ol{padding-left:20px;display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .card a{color:inherit;font-weight:600}
+    .num{font-size:11px;font-weight:700;letter-spacing:0.12em;color:#888;display:block;margin-bottom:6px}
+    [data-theme="dark"] .num{color:#555}
+    .destacado{background:#f0eeeb;border-radius:12px;padding:18px 20px;margin-top:16px}
+    [data-theme="dark"] .destacado{background:#1a1a1a}
+    .destacado p{font-size:14px}
+    .formulario{background:#f0eeeb;border-radius:12px;padding:20px;margin-top:16px;font-size:14px;line-height:1.9;color:#555;white-space:pre-line}
+    [data-theme="dark"] .formulario{background:#1a1a1a;color:#999}
+    .pendiente{background:#fff4e5;border:1px solid #f0c48a;border-radius:16px;padding:20px 24px;margin-bottom:28px}
+    .pendiente p{font-size:14px;color:#8a5200;line-height:1.7}
+    [data-theme="dark"] .pendiente{background:#2a1c05;border-color:#5c4210}
+    [data-theme="dark"] .pendiente p{color:#e8b76a}
+    .falta{color:#b45309;font-weight:700}
+    @media(max-width:600px){nav{padding:16px 20px}main{padding:100px 16px 60px}.card{padding:24px 20px}.formulario{font-size:13px;line-height:1.8;padding:16px}}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="20" fill="#111"/>
+      <path d="M20 8C14 8 10 13 10 18c0 3.5 1.8 6.5 4.5 8.2V30h11v-3.8C28.2 24.5 30 21.5 30 18c0-5-4-10-10-10z" fill="#fff"/>
+      <circle cx="16" cy="17" r="2.5" fill="#111"/>
+      <circle cx="24" cy="17" r="2.5" fill="#111"/>
+      <rect x="17" y="30" width="6" height="3" rx="1.5" fill="#fff"/>
+    </svg>
+    <span>OWL</span>
+  </a>
+  <div class="nav-right">
+    <button class="theme-btn" id="theme-toggle">🌙</button>
+    <a href="/" class="back">← Volver</a>
+  </div>
+</nav>
+<main>
+  <div class="page-label">Legal</div>
+  <h1>Condiciones de<br/>contratación</h1>
+  <p class="intro">Estas condiciones regulan la compra en OWL Store. Al confirmar un pedido las estás aceptando, así que merece la pena leerlas. Están escritas en castellano normal, sin letra pequeña.</p>
+  {{AVISO_PENDIENTE}}
+
+  <div class="card">
+    <span class="num">01</span>
+    <h2>Quién te vende</h2>
+    <p>El vendedor es <strong>{{NOMBRE}}</strong>, con NIF {{NIF}} y domicilio en {{DOMICILIO}}. Puedes escribir a <strong>{{EMAIL}}</strong> para cualquier cuestión relacionada con tu pedido. Los datos completos están en el <a href="/aviso-legal">aviso legal</a>.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">02</span>
+    <h2>Quién puede comprar</h2>
+    <p>Para comprar hay que ser mayor de 18 años y tener capacidad legal para contratar. Vendemos a consumidores particulares con dirección de entrega en España y en los países europeos listados en la página de <a href="/envios">envíos</a>.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">03</span>
+    <h2>Precios e impuestos</h2>
+    <ul>
+      <li>Todos los precios se muestran <strong>en euros y con el IVA español incluido</strong>.</li>
+      <li>Los <strong>gastos de envío están incluidos</strong> en el precio: lo que ves es lo que pagas.</li>
+      <li>En envíos fuera de la Unión Europea (Reino Unido) pueden aplicarse aranceles e impuestos de importación en destino, que corren por cuenta del comprador.</li>
+      <li>El precio aplicable es el que figura en la web en el momento de hacer el pedido. Si detectamos un error evidente de precio, te avisaremos antes de enviar y podrás confirmar o cancelar sin coste.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="num">04</span>
+    <h2>Cómo se hace un pedido</h2>
+    <ol>
+      <li>Eliges el producto y la cantidad, y lo añades al carrito.</li>
+      <li>Pulsas en pagar y se abre la pasarela segura de Stripe, donde introduces tus datos de envío y de pago.</li>
+      <li>Al confirmar el pago se formaliza el contrato. El botón de confirmación indica expresamente que el pedido conlleva obligación de pago.</li>
+      <li>Recibes un email de confirmación con el detalle de la compra. Si no te llega en unos minutos, revisa el spam y escríbenos.</li>
+    </ol>
+    <div class="destacado">
+      <p>El contrato se celebra en castellano. Guardamos el registro del pedido y puedes pedirnos una copia cuando quieras.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="num">05</span>
+    <h2>Pago</h2>
+    <p>El pago se procesa íntegramente a través de <strong>Stripe</strong>, que admite tarjeta de crédito y débito y los métodos que muestre la propia pasarela. OWL Store <strong>no ve ni guarda los datos de tu tarjeta</strong> en ningún momento.</p>
+    <p style="margin-top:12px">Si el pago es rechazado por tu banco o por Stripe, el pedido no llega a formalizarse y no se envía nada.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">06</span>
+    <h2>Entrega</h2>
+    <p>Los pedidos salen de almacén en España. Los plazos estimados y los países a los que enviamos están detallados en la página de <a href="/envios">envíos</a>.</p>
+    <p style="margin-top:12px">El plazo máximo legal de entrega es de <strong>30 días naturales</strong> desde la confirmación del pedido. Si por cualquier motivo no pudiéramos entregar en ese plazo, te lo comunicaremos y podrás resolver el contrato y recuperar íntegramente tu dinero.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">07</span>
+    <h2>Derecho de desistimiento: 14 días</h2>
+    <p>Tienes derecho a <strong>devolver el pedido en un plazo de 14 días naturales</strong> desde que lo recibes, <strong>sin tener que dar ninguna explicación</strong> y sin penalización. No hace falta que el producto esté defectuoso: basta con que hayas cambiado de opinión.</p>
+    <h3>Cómo ejercerlo</h3>
+    <p>Comunícanoslo por email a <strong>{{EMAIL}}</strong> antes de que acabe el plazo, indicando tu número de pedido. Puedes usar el formulario de abajo, aunque no es obligatorio: vale cualquier declaración inequívoca.</p>
+    <h3>Devolución del producto</h3>
+    <ul>
+      <li>Tienes <strong>14 días desde que nos avisas</strong> para enviarnos el producto de vuelta.</li>
+      <li><strong>Los costes de la devolución corren por tu cuenta</strong> cuando se trata de un desistimiento. Si el producto llegó defectuoso o equivocado, los pagamos nosotros.</li>
+      <li>Puedes abrir el paquete y probar el producto. Solo respondes de la pérdida de valor si lo has manipulado más allá de lo necesario para comprobar cómo funciona.</li>
+    </ul>
+    <h3>Devolución de tu dinero</h3>
+    <p>Te reembolsamos <strong>todo lo pagado, gastos de envío incluidos</strong>, en un plazo máximo de 14 días naturales desde que nos comunicas el desistimiento, por el mismo medio de pago que usaste. Podemos retener el reembolso hasta recibir el producto o hasta que nos demuestres que lo has enviado.</p>
+    <h3>Formulario de desistimiento</h3>
+    <div class="formulario">A la atención de {{NOMBRE}} — {{EMAIL}}
+
+Por la presente le comunico que desisto de mi contrato de venta del siguiente bien:
+
+Producto: __________________
+Número de pedido: __________________
+Recibido el: __________________
+Nombre del consumidor: __________________
+Domicilio del consumidor: __________________
+Fecha: __________________</div>
+  </div>
+
+  <div class="card">
+    <span class="num">08</span>
+    <h2>Garantía legal: 3 años</h2>
+    <p>Los productos tienen una <strong>garantía legal de conformidad de 3 años</strong> desde la entrega, según el texto refundido de la Ley General para la Defensa de los Consumidores y Usuarios.</p>
+    <p style="margin-top:12px">Si el producto no es conforme —no funciona, no se corresponde con lo descrito o falla antes de tiempo— puedes pedir su <strong>reparación o sustitución</strong> sin coste y, si eso no resuelve el problema, la <strong>rebaja del precio o la resolución del contrato</strong>.</p>
+    <p style="margin-top:12px">Durante los <strong>2 primeros años</strong> se presume que el defecto ya existía en el momento de la entrega, así que no tienes que demostrar nada. Los gastos de envío de una reclamación de garantía los pagamos nosotros.</p>
+    <p style="margin-top:12px">La garantía no cubre el desgaste normal ni los daños causados por un uso indebido, golpes o contacto con líquidos en productos no resistentes al agua.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">09</span>
+    <h2>Reclamaciones y resolución de conflictos</h2>
+    <p>Si algo sale mal, escríbenos primero a <strong>{{EMAIL}}</strong>: contestamos en menos de 48 horas laborables y casi todo se resuelve ahí.</p>
+    <p style="margin-top:12px">Si no quedas satisfecho, puedes acudir a la Junta Arbitral de Consumo o a la oficina municipal de consumo de tu localidad. También puedes solicitar la hoja de reclamaciones oficial escribiéndonos.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">10</span>
+    <h2>Ley aplicable</h2>
+    <p>Estas condiciones se rigen por la legislación española. Como consumidor, cualquier reclamación puede plantearse ante los juzgados de tu propio domicilio: ninguna cláusula de este contrato te obliga a litigar en otro sitio.</p>
+    <p style="margin-top:12px">Si alguna cláusula fuese declarada nula, el resto sigue siendo válido.</p>
+  </div>
+
+  <div class="card">
+    <span class="num">11</span>
+    <h2>Datos personales</h2>
+    <p>Tratamos tus datos únicamente para gestionar el pedido y el envío. Puedes consultar el detalle y ejercer tus derechos en la <a href="/privacidad">política de privacidad</a>.</p>
+  </div>
+
+  <p style="font-size:13px;color:#888;text-align:center;margin-top:32px">Última actualización: {{FECHA}}</p>
+</main>
+<script>
+  const t=document.getElementById("theme-toggle");
+  const s=localStorage.getItem("owl-theme")||"light";
+  if(s==="dark"){document.documentElement.setAttribute("data-theme","dark");t.textContent="☀️";}
+  t.addEventListener("click",()=>{
+    const d=document.documentElement.getAttribute("data-theme")==="dark";
+    if(d){document.documentElement.removeAttribute("data-theme");t.textContent="🌙";localStorage.setItem("owl-theme","light");}
+    else{document.documentElement.setAttribute("data-theme","dark");t.textContent="☀️";localStorage.setItem("owl-theme","dark");}
+  });
+</script>
+</body>
+</html>
