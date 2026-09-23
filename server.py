@@ -1,5 +1,6 @@
 import os, json, hmac, html, sqlite3, smtplib, stripe
 from functools import wraps
+from urllib.parse import quote
 from flask import Flask, request, jsonify, send_from_directory, redirect, Response
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -203,6 +204,22 @@ def coste_del_pedido(model_label):
     return round(total, 2)
 
 
+def modo_envio():
+    """Quién sirve los pedidos por defecto: 'casa' o 'proveedor'.
+
+    Por defecto 'casa': sin decirlo expresamente, nadie manda un pedido a un
+    proveedor en tu nombre. Sea cual sea el modo, siempre puedes decidir
+    pedido a pedido desde el panel.
+    """
+    return 'proveedor' if os.getenv('MODO_ENVIO', 'casa').strip().lower() == 'proveedor' else 'casa'
+
+
+def hay_proveedor_por_email():
+    """Un proveedor de verdad al que escribir, que no seas tú mismo."""
+    destino = (os.getenv('SUPPLIER_EMAIL') or '').strip().lower()
+    return bool(destino) and destino != (os.getenv('OWNER_EMAIL') or '').strip().lower()
+
+
 def enviar_a_proveedor(order):
     """Manda el pedido a CJ. Devuelve (enviado, explicación para el dueño).
 
@@ -404,18 +421,28 @@ def notify_tracking(order):
     return True
 
 def notify_supplier(order):
+    """Pedido al proveedor por email, para proveedores sin API.
+
+    Antes anunciaba "AirPods" pasara lo que pasara: se le habría pedido al
+    proveedor un producto que ya no se vende.
+    """
+    lineas = ''.join(
+        f'<li style="margin-bottom:4px">{cantidad} × {html.escape(str(modelo))}</li>'
+        f'<li style="margin-bottom:4px">{cantidad} × {html.escape(catalogo.FUNDA["nombre"])}</li>'
+        for modelo, cantidad in _modelos_del_pedido(order.get('model'))
+    ) or f'<li>{html.escape(str(order.get("model") or "—"))}</li>'
+
     body = f"""
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.02em;color:#111">Nuevo pedido</h2>
     <p style="margin:0 0 28px;color:#888;font-size:14px">Por favor, prepara y envía el siguiente pedido a la dirección indicada.</p>
     <table width="100%" cellpadding="0" cellspacing="0">
-      {_row('Producto', f"AirPods {order['model']} + Funda silicona OWL")}
-      {_row('Cantidad', str(order['qty']))}
-      {_row('Destinatario', order['customer_name'])}
-      {_row('Dirección envío', order['customer_address'])}
+      {_row('Contenido', f'<ul style="margin:0;padding-left:18px">{lineas}</ul>')}
+      {_row('Destinatario', '<br/>'.join(_etiqueta_envio(order)))}
     </table>
     <p style="margin-top:28px;font-size:14px;color:#555">Gracias por tu colaboración.</p>
     """
-    send_email(os.getenv('SUPPLIER_EMAIL'), f'Pedido — {order["model"]} x{order["qty"]}', render_email(body))
+    send_email(os.getenv('SUPPLIER_EMAIL'),
+               f'Pedido — {order["model"]} x{order["qty"]}', render_email(body))
 
 def notify_customer(order):
     # Stripe puede devolver el nombre vacío: sin este guardo el email reventaba.
@@ -543,11 +570,16 @@ def webhook():
         if is_new:
             # El pedido ya está guardado. A partir de aquí nada puede perderlo:
             # si el proveedor falla, se avisa al dueño para hacerlo a mano.
-            enviado, detalle = enviar_a_proveedor(order)
+            if modo_envio() == 'proveedor':
+                enviado, detalle = enviar_a_proveedor(order)
+            else:
+                # Modo casa: el proveedor no se toca. Si quieres delegarlo,
+                # se hace desde el panel, pedido a pedido.
+                enviado, detalle = False, 'Lo sirves tú (MODO_ENVIO=casa)'
             order['cj_estado'] = detalle
 
             notify_owner(order, auto_ok=enviado, auto_detalle=detalle)
-            if not enviado:
+            if not enviado and modo_envio() == 'proveedor' and hay_proveedor_por_email():
                 notify_supplier(order)
             if email:
                 notify_customer(order)
@@ -631,14 +663,23 @@ def admin():
             return f'<span style="color:#0a7d32">{esc(o["tracking"])}</span>'
         if o.get('cj_order_id'):
             return '<span style="color:#888">en el proveedor</span>'
-        # Enviando desde casa no hay proveedor que devuelva el seguimiento:
-        # se escribe aquí al volver de Correos y el cliente recibe el aviso.
-        return (f'<form method="post" action="/admin/enviar" style="display:flex;gap:6px">'
-                f'<input type="hidden" name="id" value="{esc(o["id"])}">'
-                f'<input name="tracking" placeholder="Nº seguimiento" required '
-                f'style="width:118px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px">'
-                f'<button style="padding:7px 11px;border:0;border-radius:6px;background:#111;'
-                f'color:#fff;font-size:12px;font-weight:600;cursor:pointer">Enviado</button></form>')
+        # Dos salidas para el mismo pedido: lo mandas tú, o lo delegas.
+        # Enviando desde casa no hay proveedor que devuelva el seguimiento,
+        # así que el número se escribe aquí al volver de Correos.
+        propio = (f'<form method="post" action="/admin/enviar" style="display:flex;gap:6px">'
+                  f'<input type="hidden" name="id" value="{esc(o["id"])}">'
+                  f'<input name="tracking" placeholder="Nº seguimiento" required '
+                  f'style="width:118px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px">'
+                  f'<button style="padding:7px 11px;border:0;border-radius:6px;background:#111;'
+                  f'color:#fff;font-size:12px;font-weight:600;cursor:pointer">Lo envío yo</button></form>')
+        if not (cj.configurado() or hay_proveedor_por_email()):
+            return propio
+        delegar = (f'<form method="post" action="/admin/proveedor" style="margin-top:6px">'
+                   f'<input type="hidden" name="id" value="{esc(o["id"])}">'
+                   f'<button style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;'
+                   f'background:#fff;color:#555;font-size:12px;cursor:pointer">'
+                   f'Que lo envíe el proveedor</button></form>')
+        return propio + delegar
 
     rows = ''.join(f'''<tr>
         <td>#{esc(o["id"])}</td>
@@ -651,6 +692,10 @@ def admin():
         <td style="font-size:12px">{envio_celda(o)}</td>
         <td style="font-size:12px;color:#888">{esc(o["created_at"])[:16]}</td>
     </tr>''' for o in orders)
+    aviso = (request.args.get('msg') or '')[:300]
+    aviso_html = ('' if not aviso else
+                  f'<div style="margin:0 40px 16px;padding:14px 18px;border-radius:10px;'
+                  f'background:#fff7ed;color:#7c2d12;font-size:13px">{html.escape(aviso)}</div>')
     total = sum(o['price'] for o in orders)
     beneficios = [beneficio(o) for o in orders]
     total_neto = round(sum(b for b in beneficios if b is not None), 2)
@@ -677,9 +722,11 @@ def admin():
   <div class="stat"><div class="n" style="color:#0a7d32">{total_neto:.2f}€</div><div class="l">Te queda a ti</div></div>
   <div class="stat"><div class="n">{sum(1 for o in orders if not o.get("tracking"))}</div><div class="l">Sin seguimiento</div></div>
 </div>
+{aviso_html}
 <div style="padding:0 40px 16px">
   <a href="/sync-envios" style="font-size:13px;color:#555">Actualizar seguimientos desde el proveedor →</a>
-  <span style="font-size:13px;color:#aaa;margin-left:12px">Proveedor: {'conectado' if cj.configurado() else 'sin configurar (pedidos manuales)'}</span>
+  <span style="font-size:13px;color:#aaa;margin-left:12px">Por defecto: {'lo envía el proveedor' if modo_envio() == 'proveedor' else 'lo envías tú'}</span>
+  <span style="font-size:13px;color:#aaa;margin-left:12px">Proveedor: {'conectado' if cj.configurado() else ('por email' if hay_proveedor_por_email() else 'sin configurar')}</span>
 </div>
 <table>
   <tr><th>#</th><th>Modelo</th><th>Precio</th><th>Coste</th><th>Beneficio</th><th>Cliente</th><th>Dirección</th><th>Envío</th><th>Fecha</th></tr>
@@ -710,6 +757,32 @@ def admin_enviar():
     if pedido:
         notify_tracking(pedido)
     return redirect('/admin')
+
+@app.route('/admin/proveedor', methods=['POST'])
+@require_admin
+def admin_proveedor():
+    """Delega un pedido concreto en el proveedor, sin cambiar el modo general.
+
+    Sirve para el caso real de tener las dos vías: hay stock en casa y lo
+    mandas tú, o te has quedado sin él y lo sirve el proveedor.
+    """
+    try:
+        order_id = int(request.form.get('id') or '')
+    except ValueError:
+        return redirect('/admin')
+
+    pedido = next((o for o in all_orders() if o['id'] == order_id), None)
+    if not pedido:
+        return redirect('/admin?msg=' + quote('No encuentro ese pedido.'))
+    if pedido.get('tracking'):
+        return redirect('/admin?msg=' + quote(
+            f'El pedido #{order_id} ya se envió, no lo mando otra vez.'))
+
+    enviado, detalle = enviar_a_proveedor(pedido)
+    if not enviado and hay_proveedor_por_email():
+        notify_supplier(pedido)
+        detalle = f'{detalle}. Le he mandado el pedido al proveedor por email.'
+    return redirect('/admin?msg=' + quote(f'Pedido #{order_id}: {detalle}'))
 
 # ── PÁGINAS LEGALES ───────────────────────────────────────────────────────────
 # El aviso legal y las condiciones llevan datos fiscales que la LSSI obliga a
