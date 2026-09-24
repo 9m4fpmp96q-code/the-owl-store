@@ -475,20 +475,25 @@ def create_checkout():
 
     # Soporta tanto items[] (carrito completo) como model/qty (legado)
     raw_items = data.get('items')
+    # Respaldo: el primer producto del catálogo, sea cual sea. Antes esto
+    # apuntaba a 'Gen4 ANC', un modelo que ya no existe, así que un modelo
+    # desconocido tiraba el checkout con KeyError en vez de cobrar.
+    POR_DEFECTO = next(iter(PRICES))
+
     if not raw_items:
-        raw_items = [{'model': data.get('model', 'Gen4 ANC'), 'qty': int(data.get('qty', 1))}]
+        raw_items = [{'model': data.get('model', POR_DEFECTO), 'qty': int(data.get('qty', 1))}]
 
     line_items = []
     for item in raw_items:
-        model = item.get('model', 'Gen4 ANC')
+        model = item.get('model') or POR_DEFECTO
         qty   = int(item.get('qty', 1))
-        price = PRICES.get(model, catalogo.PRECIOS_PACK['Gen4 ANC'])
+        price = PRICES.get(model, PRICES[POR_DEFECTO])
         line_items.append({
             'price_data': {
                 'currency': 'eur',
                 'product_data': {
-                    'name': f'AirPods {model} + Cover OWL',
-                    'description': 'Auriculares inalámbricos + funda personalizada OWL + mosquetón de acero',
+                    'name': f'{model} + funda OWL',
+                    'description': f'{model} + funda OWL con logo grabado + mosquetón de acero inoxidable',
                     'images': [],
                 },
                 # Stripe cobra en céntimos enteros. Con precios decimales

@@ -29,23 +29,24 @@ FUNDA = {
     'cj_pid':       None,
 }
 
-# Producto elegido el 2026-09-21: Xiaomi Redmi Buds 6 Play.
-# Marca real, 4.9 estrellas, +5.000 ventas, y sale de almacén en España,
-# así que llega en 48 h sin aduanas.
+# Producto decidido el 2026-09-24: auriculares de marca propia.
 #
-# OJO: NO tiene ANC. Su "reducción de ruido con IA" es para las llamadas
-# (ENC): limpia tu voz para quien te escucha, no cancela el ruido que tú
-# oyes. Filtrando por almacén español no existe ningún TWS con ANC real
-# por debajo de 20 €. No se puede prometer ANC con este producto.
+# Se deja de revender marca ajena y se fabrican con el logo OWL. Es lo que
+# hace que el precio funcione: unos auriculares de otra marca los compara
+# el cliente en Amazon en diez segundos; los tuyos no los tiene nadie.
+#
+# OJO con el coste: es ESTIMADO hasta que vuelvan los presupuestos de
+# fábrica. En cuanto tengas el precio real, se cambia aquí y toda la tienda
+# se recalcula sola. No publiques ficha técnica hasta que la fábrica
+# confirme las características: prometer ANC que la unidad no trae es la
+# forma más rápida de comerse las devoluciones.
 AURICULARES = {
-    'Redmi Buds 6 Play': {'coste_compra': 14.18, 'cj_pid': None},
+    'OWL Buds': {'coste_compra': 11.00, 'cj_pid': None},   # ESTIMADO 8-14 €
 }
 
-# Precio fijado a mano en 34,90 €, no por fórmula: el comprador puede
-# encontrar estos auriculares a 14 € buscando, así que el margen se sacrifica
-# para que el salto sea defendible. Lo que se cobra de más es el servicio —
-# entrega en 48 h, devolución real y atención en español.
-PRECIO_PACK_FIJO = 34.90
+# Precio fijado por el dueño el 2026-09-24. Con marca propia el precio deja
+# de estar atado al de nadie: no hay referencia con la que compararte.
+PRECIO_PACK_FIJO = 39.95
 
 
 def _redondea_comercial(precio):
