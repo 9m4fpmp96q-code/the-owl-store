@@ -25,6 +25,15 @@
       --bg3:    #eeecea;
       --text:   #111111;
       --accent: #111111;
+      /* Ambar de marca. El boton principal sigue siendo negro: el ambar
+         es el detalle, no el protagonista. Si lo pintas todo, no destaca nada. */
+      --ambar:      #a8641c;
+      --ambar-soft: #f4ead9;
+      /* Colores de la ilustracion, redefinidos en modo oscuro mas abajo. */
+      --ilu-fondo:  #efece6;
+      --ilu-cuerpo: #ffffff;
+      --ilu-linea:  #1a1a1a;
+      --ilu-sombra: #ddd8d0;
       --muted:  #888888;
       --border: rgba(0,0,0,0.09);
       --radius: 20px;
@@ -42,6 +51,12 @@
       --border: rgba(255,255,255,0.09);
       --nav-bg: rgba(10,10,10,0.88);
       --nav-scrolled: rgba(10,10,10,0.97);
+      --ambar:      #d9a250;
+      --ambar-soft: #2a2115;
+      --ilu-fondo:  #1a1a1a;
+      --ilu-cuerpo: #2b2b2b;
+      --ilu-linea:  #e8e8e8;
+      --ilu-sombra: #141414;
     }
 
     html { scroll-behavior: smooth; }
@@ -790,6 +805,32 @@
       color: var(--muted);
     }
 
+    /* ── ILUSTRACION DEL PACK ────────────────── */
+    .pack-ilustracion { width: 100%; height: auto; display: block; }
+
+    /* ── BARRA DE COMPRA EN MOVIL ────────────── */
+    /* En el movil el boton de comprar se queda arriba y el cliente
+       llega al pie sin nada que pulsar. Esta barra aparece al pasar
+       la portada y no se va. */
+    .barra-movil {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+      display: none; align-items: center; gap: 14px;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: var(--nav-scrolled); backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      transform: translateY(110%); transition: transform .28s ease;
+    }
+    .barra-movil.visible { transform: translateY(0); }
+    .barra-movil .bm-precio { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+    .barra-movil .bm-sub { font-size: 11.5px; color: var(--muted); display: block; font-weight: 500; }
+    .barra-movil button {
+      margin-left: auto; background: var(--text); color: var(--bg);
+      border: 0; border-radius: 100px; padding: 14px 26px;
+      font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+      min-height: 48px;
+    }
+    @media (max-width: 760px) { .barra-movil { display: flex; } }
+
     /* ── FICHA TECNICA ───────────────────────── */
     .specs-wrap { max-width: 760px; margin: 0 auto; }
     .spec-row {
@@ -1256,6 +1297,55 @@
   </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="ilu-pack" viewBox="0 0 400 480">
+    <circle cx="200" cy="236" r="158" fill="var(--ambar-soft)"/>
+
+    <!-- mosquetón -->
+    <g fill="none" stroke="var(--ilu-linea)" stroke-width="9" stroke-linecap="round">
+      <path d="M306 74c0-21 17-38 38-38s38 17 38 38-17 38-38 38h-20"/>
+      <path d="M310 92l-16 16 16 16"/>
+    </g>
+
+    <!-- auricular izquierdo -->
+    <g transform="translate(92 96) rotate(-16 33 33)">
+      <rect x="18" y="52" width="30" height="92" rx="15"
+            fill="var(--ilu-cuerpo)" stroke="var(--ilu-linea)" stroke-width="7"/>
+      <circle cx="33" cy="38" r="35" fill="var(--ilu-cuerpo)" stroke="var(--ilu-linea)" stroke-width="7"/>
+      <circle cx="33" cy="38" r="13" fill="var(--ambar)"/>
+    </g>
+
+    <!-- auricular derecho -->
+    <g transform="translate(212 74) rotate(14 33 33)">
+      <rect x="18" y="52" width="30" height="92" rx="15"
+            fill="var(--ilu-cuerpo)" stroke="var(--ilu-linea)" stroke-width="7"/>
+      <circle cx="33" cy="38" r="35" fill="var(--ilu-cuerpo)" stroke="var(--ilu-linea)" stroke-width="7"/>
+      <circle cx="33" cy="38" r="13" fill="var(--ambar)"/>
+    </g>
+
+    <!-- estuche con la funda OWL -->
+    <g>
+      <rect x="104" y="252" width="192" height="176" rx="46" fill="var(--ilu-sombra)"/>
+      <rect x="96" y="244" width="192" height="176" rx="46"
+            fill="var(--ilu-cuerpo)" stroke="var(--ilu-linea)" stroke-width="8"/>
+      <path d="M96 296h192" stroke="var(--ilu-linea)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="192" cy="272" r="7" fill="var(--ambar)"/>
+
+      <!-- logo OWL grabado. Va en negativo dentro del circulo, como la
+           marca: el buho suelto en positivo se lee como una calavera. -->
+      <g transform="translate(154 330) scale(1.9)">
+        <circle cx="20" cy="20" r="20" fill="var(--ilu-linea)"/>
+        <path d="M20 8C14 8 10 13 10 18c0 3.5 1.8 6.5 4.5 8.2V30h11v-3.8C28.2 24.5 30 21.5 30 18c0-5-4-10-10-10z"
+              fill="var(--ilu-cuerpo)"/>
+        <circle cx="16" cy="17" r="3" fill="var(--ambar)"/>
+        <circle cx="24" cy="17" r="3" fill="var(--ambar)"/>
+        <rect x="17" y="30" width="6" height="3" rx="1.5" fill="var(--ilu-cuerpo)"/>
+      </g>
+    </g>
+  </symbol>
+</svg>
+
+
 
 <!-- ── WHATSAPP ──────────────────────────────────────────────────── -->
 <a class="wa-btn" id="wa-btn" hidden href="#" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp">
@@ -1344,7 +1434,10 @@
   </div>
   <div class="hero-visual">
     <div class="hero-img-wrap">
-      <div style="aspect-ratio:3/4;background:var(--bg2);border-radius:20px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);text-align:center;padding:32px"><div style="font-size:52px">🦉</div><div style="font-size:15px;font-weight:600">Foto del pack OWL</div><div style="font-size:13px;opacity:.75">Auriculares + funda + mosquetón</div></div>
+      <svg class="pack-ilustracion" viewBox="0 0 400 480" role="img"
+           aria-label="Ilustración del pack OWL: auriculares, funda con el logo del búho y mosquetón">
+        <use href="#ilu-pack"/>
+      </svg>
     </div>
   </div>
 </section>
@@ -1384,7 +1477,15 @@
   <div class="product-detail">
     <div class="product-images">
       <div class="product-main-img">
-        <div id="main-product-img" style="aspect-ratio:3/4;background:var(--bg2);border-radius:16px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);text-align:center;padding:24px"><div style="font-size:40px">🦉</div><div style="font-size:14px;font-weight:600">Foto del producto</div><div style="font-size:12px;opacity:.75">Pendiente de fotografiar el pack real</div></div>
+        <div id="main-product-img" style="background:var(--bg2);border-radius:16px;overflow:hidden">
+          <svg class="pack-ilustracion" viewBox="0 0 400 480" role="img"
+               aria-label="Ilustración del pack OWL">
+            <use href="#ilu-pack"/>
+          </svg>
+        </div>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">
+          Ilustración. Las fotos reales llegan con la primera producción.
+        </p>
       </div>
       <div class="product-thumbs-strip" id="thumbs-strip"></div>
     </div>
@@ -1405,9 +1506,6 @@
 
       <button class="add-to-cart">
         Comprar ahora — 39,95 €
-      </button>
-      <button class="wishlist-btn">
-        ♡ Guardar en lista de deseos
       </button>
 
       <div class="product-perks">
@@ -1571,6 +1669,14 @@
 </div>
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
+<div class="barra-movil" id="barra-movil">
+  <div>
+    <span class="bm-precio">39,95 €</span>
+    <span class="bm-sub">Pack OWL · envío gratis</span>
+  </div>
+  <button id="bm-comprar">Comprar</button>
+</div>
+
 <footer>
   <div class="footer-top">
     <div class="footer-brand">
@@ -1670,15 +1776,37 @@
 
   // ── NAV SCROLL ───────────────────────────────────────────────────
   const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => {
-    nav.classList.toggle('scrolled', window.scrollY > 40);
-  });
+  const barraMovil = document.getElementById('barra-movil');
+  const hero = document.querySelector('.hero');
 
-  // ── FOTOS POR MODELO (foto única por modelo) ─────────────────────
-  // Un solo producto. Las fotos deben ser del producto REAL: las que hay
-  // del producto REAL. Hasta entonces la ficha muestra un marcador.
+  // window.scrollY se queda a 0 en algunos contextos (visores embebidos,
+  // iframes) aunque el documento sí esté desplazado. Se toma el mayor de
+  // los dos para no depender de uno solo.
+  function desplazamiento() {
+    return Math.max(window.scrollY || 0,
+                    document.documentElement.scrollTop || 0,
+                    document.body.scrollTop || 0);
+  }
+
+  function alDesplazar() {
+    const y = desplazamiento();
+    nav.classList.toggle('scrolled', y > 40);
+    // La barra aparece al pasar la portada, donde el botón de comprar
+    // ya se ha quedado arriba fuera de pantalla.
+    if (barraMovil && hero) {
+      barraMovil.classList.toggle('visible', y > hero.offsetHeight * 0.75);
+    }
+  }
+
+  window.addEventListener('scroll', alDesplazar, { passive: true });
+  document.addEventListener('scroll', alDesplazar, { passive: true });
+  alDesplazar();   // por si se entra con la página ya desplazada
+
+  // ── FOTOS POR MODELO ─────────────────────────────────────────────
+  // Vacío a propósito: hasta que haya fotos del producto REAL, la ficha
+  // enseña la ilustración. Poner aquí fotos de otro producto es como
+  // empezó todo esto.
   const modelPhotos = { 'OWL Buds': [] };
- // _unused — kept for reference only
 
   function setMainImg(src) {
     const main = document.getElementById('main-product-img');
@@ -1718,6 +1846,8 @@
 
   // ── MODEL SELECTOR ───────────────────────────────────────────────
   const addToCartBtn = document.querySelector('.add-to-cart');
+  const bmComprar = document.getElementById('bm-comprar');
+  if (bmComprar && addToCartBtn) bmComprar.addEventListener('click', () => addToCartBtn.click());
   // Formatea en euros con coma decimal, como se escribe en España.
   function fmtEur(v) {
     const n = typeof v === 'number' ? v : parseFloat(v);
