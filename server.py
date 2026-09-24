@@ -74,10 +74,33 @@ def init_db():
         ('tracking',         'TEXT'),
         ('coste',            'REAL'),
     ]
+    resenas_pg = '''CREATE TABLE IF NOT EXISTS resenas (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER UNIQUE,
+        model TEXT,
+        puntuacion INTEGER,
+        titulo TEXT,
+        texto TEXT,
+        autor TEXT,
+        publicada INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )'''
+    resenas_sqlite = '''CREATE TABLE IF NOT EXISTS resenas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER UNIQUE,
+        model TEXT,
+        puntuacion INTEGER,
+        titulo TEXT,
+        texto TEXT,
+        autor TEXT,
+        publicada INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )'''
     conn = get_db()
     try:
         cur = conn.cursor()
         cur.execute(schema_pg if USE_PG else schema_sqlite)
+        cur.execute(resenas_pg if USE_PG else resenas_sqlite)
         conn.commit()
         for nombre, tipo in extra:
             try:
@@ -160,6 +183,97 @@ def all_orders():
         conn.close()
 
 init_db()
+
+
+# ── RESEÑAS ───────────────────────────────────────────────────────────────────
+# Solo opina quien ha comprado. El enlace se firma con una clave del servidor y
+# va atado al número de pedido: sin pedido no hay reseña. Por eso esta tienda no
+# puede tener reseñas inventadas, ni aunque alguien quisiera ponerlas.
+
+def _clave_resenas():
+    """Clave para firmar los enlaces. Sin ninguna, no se emite ningún enlace."""
+    return (os.getenv('RESENAS_SECRET') or os.getenv('ADMIN_PASSWORD')
+            or os.getenv('STRIPE_WEBHOOK_SECRET') or '')
+
+
+def token_resena(order_id):
+    clave = _clave_resenas()
+    if not clave:
+        return ''
+    return hmac.new(clave.encode(), f'resena:{order_id}'.encode(),
+                    'sha256').hexdigest()[:32]
+
+
+def token_valido(order_id, token):
+    esperado = token_resena(order_id)
+    # Sin clave configurada no se valida nada: cerrado antes que abierto.
+    return bool(esperado) and hmac.compare_digest(esperado, token or '')
+
+
+def enlace_resena(order_id):
+    t = token_resena(order_id)
+    base = os.getenv('BASE_URL', '').rstrip('/')
+    return f'{base}/opinar/{order_id}/{t}' if (t and base) else ''
+
+
+def guardar_resena(order_id, model, puntuacion, titulo, texto, autor):
+    """Una reseña por pedido. Nace sin publicar: la publica el dueño."""
+    marca = '%s' if USE_PG else '?'
+    verbo = 'INSERT INTO' if USE_PG else 'INSERT OR IGNORE INTO'
+    cola = 'ON CONFLICT (order_id) DO NOTHING' if USE_PG else ''
+    sql = (f'{verbo} resenas (order_id, model, puntuacion, titulo, texto, autor) '
+           f'VALUES ({marca}, {marca}, {marca}, {marca}, {marca}, {marca}) {cola}')
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, (order_id, model, puntuacion, titulo, texto, autor))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def resena_de_pedido(order_id):
+    marca = '%s' if USE_PG else '?'
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(f'SELECT * FROM resenas WHERE order_id = {marca}', (order_id,))
+        fila = cur.fetchone()
+        return dict(fila) if fila else None
+    finally:
+        conn.close()
+
+
+def listar_resenas(solo_publicadas=True):
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM resenas'
+                    + (' WHERE publicada = 1' if solo_publicadas else '')
+                    + ' ORDER BY created_at DESC')
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def cambiar_resena(resena_id, publicada=None, borrar=False):
+    marca = '%s' if USE_PG else '?'
+    conn = get_db()
+    try:
+        cur = conn.cursor()
+        if borrar:
+            cur.execute(f'DELETE FROM resenas WHERE id = {marca}', (resena_id,))
+        else:
+            cur.execute(f'UPDATE resenas SET publicada = {marca} WHERE id = {marca}',
+                        (1 if publicada else 0, resena_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def pedido_por_id(order_id):
+    return next((o for o in all_orders() if o['id'] == order_id), None)
 
 # ── AUTENTICACIÓN DEL PANEL ───────────────────────────────────────────────────
 def require_admin(f):
@@ -404,6 +518,19 @@ def notify_tracking(order):
         return False
     parts = (order.get('customer_name') or '').split()
     nombre = parts[0] if parts else ''
+
+    # El enlace para opinar va aquí porque es el único email que sale cuando
+    # el pedido ya es real. Sin BASE_URL o sin clave no se genera y no se
+    # enseña un botón roto.
+    url_opinar = enlace_resena(order['id'])
+    opinar = '' if not url_opinar else (
+        '<div style="margin-top:32px;padding-top:28px;border-top:1px solid #f0f0f0;text-align:center">'
+        '<p style="margin:0 0 14px;font-size:14px;color:#555">Cuando lo tengas en casa, '
+        'cuéntanos qué tal. Se publica tal cual, sea buena o mala.</p>'
+        f'<a href="{html.escape(url_opinar)}" style="display:inline-block;background:#111;'
+        'color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 22px;'
+        'border-radius:10px">Dejar mi opinión</a></div>')
+
     body = f"""
     <div style="text-align:center;margin-bottom:32px">
       <div style="font-size:48px;margin-bottom:12px">📦</div>
@@ -416,6 +543,7 @@ def notify_tracking(order):
       {_row('Dirección', html.escape(order.get('customer_address') or ''))}
     </table>
     <p style="text-align:center;font-size:13px;color:#aaa;margin:0">¿Alguna duda? Escríbenos a <a href="mailto:{support_email()}" style="color:#111">{support_email()}</a></p>
+    {opinar}
     """
     send_email(order['customer_email'], f'📦 Tu pedido OWL va en camino', render_email(body))
     return True
@@ -697,6 +825,34 @@ def admin():
         <td style="font-size:12px">{envio_celda(o)}</td>
         <td style="font-size:12px;color:#888">{esc(o["created_at"])[:16]}</td>
     </tr>''' for o in orders)
+    def boton(rid, accion, texto, fondo):
+        return (f'<form method="post" action="/admin/resena" style="display:inline">'
+                f'<input type="hidden" name="id" value="{rid}">'
+                f'<input type="hidden" name="accion" value="{accion}">'
+                f'<button style="padding:6px 10px;margin-right:4px;border:0;border-radius:6px;'
+                f'background:{fondo};color:#fff;font-size:12px;font-weight:600;cursor:pointer">'
+                f'{texto}</button></form>')
+
+    filas_resenas = ''.join(
+        f'''<tr>
+        <td>#{esc(r["id"])}</td>
+        <td style="color:#888">#{esc(r["order_id"])}</td>
+        <td>{"★" * int(r.get("puntuacion") or 0)}</td>
+        <td style="max-width:340px">
+          <b>{esc(r.get("titulo") or "")}</b><br/>
+          <span style="font-size:13px;color:#555">{esc(r.get("texto") or "")}</span>
+        </td>
+        <td style="font-size:13px">{esc(r.get("autor") or "")}</td>
+        <td style="font-size:12px">{'<span style="color:#0a7d32">publicada</span>'
+                                    if r.get("publicada") else
+                                    '<span style="color:#b45309">sin publicar</span>'}</td>
+        <td style="white-space:nowrap">
+          {boton(r["id"], "ocultar", "Ocultar", "#888") if r.get("publicada")
+           else boton(r["id"], "publicar", "Publicar", "#0a7d32")}
+          {boton(r["id"], "borrar", "Borrar", "#b4232a")}
+        </td>
+    </tr>''' for r in listar_resenas(solo_publicadas=False))
+
     aviso = (request.args.get('msg') or '')[:300]
     aviso_html = ('' if not aviso else
                   f'<div style="margin:0 40px 16px;padding:14px 18px;border-radius:10px;'
@@ -736,6 +892,15 @@ def admin():
 <table>
   <tr><th>#</th><th>Modelo</th><th>Precio</th><th>Coste</th><th>Beneficio</th><th>Cliente</th><th>Dirección</th><th>Envío</th><th>Fecha</th></tr>
   {rows or '<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">No hay pedidos aún</td></tr>'}
+</table>
+<h2 style="margin:40px 40px 4px;font-size:17px">Reseñas</h2>
+<p style="margin:0 40px 16px;font-size:13px;color:#888">
+  Publica también las malas. Quedarte solo con las buenas es una práctica
+  desleal tipificada, y se nota.
+</p>
+<table>
+  <tr><th>#</th><th>Pedido</th><th>Nota</th><th>Opinión</th><th>Firma</th><th>Estado</th><th></th></tr>
+  {filas_resenas or '<tr><td colspan="7" style="text-align:center;padding:32px;color:#888">Aún no hay reseñas. Llegan solas cuando marcas un pedido como enviado.</td></tr>'}
 </table>
 </body></html>'''
 
@@ -788,6 +953,189 @@ def admin_proveedor():
         notify_supplier(pedido)
         detalle = f'{detalle}. Le he mandado el pedido al proveedor por email.'
     return redirect('/admin?msg=' + quote(f'Pedido #{order_id}: {detalle}'))
+
+def _pagina_resena(cuerpo, titulo='Tu opinión — OWL Store'):
+    """Envoltorio de las páginas de reseña. Mismo aire que el resto de la tienda."""
+    return ('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>'
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0"/>'
+            f'<title>{html.escape(titulo)}</title>'
+            '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>'
+            '<style>' + _CSS_RESENA + '</style></head><body><div class="caja">'
+            + _MARCA_RESENA + cuerpo + '</div></body></html>')
+
+
+_CSS_RESENA = (
+    "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}"
+    "body{font-family:'Inter',system-ui,sans-serif;background:#f7f6f3;color:#111;"
+    "display:grid;place-items:center;min-height:100vh;padding:32px 20px}"
+    ".caja{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:22px;"
+    "padding:36px;max-width:560px;width:100%}"
+    ".marca{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.1em;"
+    "font-size:15px;margin-bottom:26px}"
+    "h1{font-size:26px;font-weight:900;letter-spacing:-.02em;line-height:1.2}"
+    ".sub{font-size:14.5px;color:#777;line-height:1.7;margin-top:10px}"
+    "label{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;"
+    "text-transform:uppercase;color:#888;margin:22px 0 8px}"
+    "input,textarea{width:100%;font-family:inherit;font-size:15px;padding:13px 14px;"
+    "border:1px solid #ddd;border-radius:11px;background:#fff;color:#111}"
+    "textarea{min-height:120px;resize:vertical;line-height:1.6}"
+    "input:focus,textarea:focus{outline:2px solid #a8641c;outline-offset:1px;border-color:transparent}"
+    ".estrellas{display:flex;gap:6px;direction:rtl;justify-content:flex-end}"
+    ".estrellas input{display:none}"
+    ".estrellas label{margin:0;font-size:34px;color:#ddd;cursor:pointer;line-height:1;"
+    "text-transform:none;letter-spacing:0;transition:color .15s}"
+    ".estrellas input:checked ~ label,.estrellas label:hover,"
+    ".estrellas label:hover ~ label{color:#a8641c}"
+    "button{width:100%;margin-top:28px;background:#111;color:#fff;border:0;border-radius:12px;"
+    "padding:16px;font-family:inherit;font-size:15.5px;font-weight:700;cursor:pointer;min-height:52px}"
+    "button:hover{background:#333}"
+    ".aviso{background:#f4ead9;border-radius:12px;padding:15px 17px;font-size:13.5px;"
+    "color:#7a4a12;line-height:1.65;margin-top:22px}"
+    ".ok{text-align:center} .ok .emo{font-size:46px}"
+    ".volver{display:block;text-align:center;margin-top:22px;font-size:14px;color:#888}"
+)
+
+_MARCA_RESENA = (
+    '<div class="marca"><svg width="26" height="26" viewBox="0 0 40 40">'
+    '<circle cx="20" cy="20" r="20" fill="#111"/>'
+    '<path d="M9.5 6C10.4 9.6 11.6 11.8 13.2 13.2C15.1 11.6 17.4 10.7 20 10.7'
+    'C22.6 10.7 24.9 11.6 26.8 13.2C28.4 11.8 29.6 9.6 30.5 6C30.5 6 30.3 11.4 29.3 14.6'
+    'C30.1 16.4 30.5 18.4 30.5 20.5C30.5 26.6 25.8 31.5 20 31.5C14.2 31.5 9.5 26.6 9.5 20.5'
+    'C9.5 18.4 9.9 16.4 10.7 14.6C9.7 11.4 9.5 6 9.5 6Z" fill="#fff"/>'
+    '<circle cx="15.6" cy="19.2" r="3.6" fill="#111"/>'
+    '<circle cx="24.4" cy="19.2" r="3.6" fill="#111"/>'
+    '<path d="M17.9 22.4h4.2L20 26z" fill="#111"/>'
+    '</svg><span>OWL</span></div>'
+)
+
+
+@app.route('/opinar/<int:order_id>/<token>', methods=['GET', 'POST'])
+def opinar(order_id, token):
+    """Formulario de reseña.
+
+    Solo llega quien tiene el enlace firmado, y el enlace solo se manda cuando
+    el pedido sale hacia el cliente. Por eso aquí no pueden entrar reseñas
+    inventadas: no hay forma de escribir una sin haber comprado.
+    """
+    if not token_valido(order_id, token):
+        return _pagina_resena(
+            '<h1>Este enlace no vale</h1>'
+            '<p class="sub">O no corresponde a ningún pedido, o falta configurar '
+            'la clave del servidor. Si has comprado y quieres opinar, escríbenos '
+            'y te mandamos uno nuevo.</p>'
+            '<a class="volver" href="/">← Volver a la tienda</a>'), 404
+
+    pedido = pedido_por_id(order_id)
+    if not pedido:
+        return _pagina_resena(
+            '<h1>No encuentro ese pedido</h1>'
+            '<a class="volver" href="/">← Volver a la tienda</a>'), 404
+
+    if resena_de_pedido(order_id):
+        return _pagina_resena(
+            '<div class="ok"><div class="emo">🙏</div>'
+            '<h1 style="margin-top:14px">Ya nos diste tu opinión</h1>'
+            '<p class="sub">Gracias. Solo aceptamos una por pedido, para que '
+            'ninguna cuente más de la cuenta.</p></div>'
+            '<a class="volver" href="/">← Volver a la tienda</a>')
+
+    nombre_pila = (pedido.get('customer_name') or '').split()
+    nombre_pila = nombre_pila[0] if nombre_pila else ''
+
+    if request.method == 'POST':
+        try:
+            puntuacion = int(request.form.get('puntuacion') or 0)
+        except ValueError:
+            puntuacion = 0
+        puntuacion = min(5, max(1, puntuacion))
+        titulo = (request.form.get('titulo') or '').strip()[:80]
+        texto = (request.form.get('texto') or '').strip()[:1200]
+        autor = (request.form.get('autor') or '').strip()[:40] or nombre_pila or 'Cliente'
+
+        if not texto:
+            return _pagina_resena(
+                '<h1>Falta el texto</h1>'
+                '<p class="sub">Cuéntanos algo, aunque sea corto.</p>'
+                f'<a class="volver" href="/opinar/{order_id}/{html.escape(token)}">← Volver</a>'), 400
+
+        guardar_resena(order_id, pedido.get('model'), puntuacion, titulo, texto, autor)
+        return _pagina_resena(
+            '<div class="ok"><div class="emo">🦉</div>'
+            '<h1 style="margin-top:14px">Gracias de verdad</h1>'
+            '<p class="sub">La leemos una por una. Aparecerá en la tienda en cuanto '
+            'la revisemos — y se publica diga lo que diga, también si es mala.</p></div>'
+            '<a class="volver" href="/">← Volver a la tienda</a>')
+
+    estrellas = ''.join(
+        f'<input type="radio" id="e{n}" name="puntuacion" value="{n}"'
+        + (' checked' if n == 5 else '') + f'><label for="e{n}">★</label>'
+        for n in (5, 4, 3, 2, 1))
+    saludo = (', ' + html.escape(nombre_pila)) if nombre_pila else ''
+
+    return _pagina_resena(
+        f'<h1>¿Qué tal el pedido{saludo}?</h1>'
+        '<p class="sub">Tu opinión sale publicada en la tienda con el nombre con el '
+        'que firmes. Sé todo lo sincero que quieras: publicamos también las malas.</p>'
+        '<form method="post">'
+        '<label>Puntuación</label>'
+        f'<div class="estrellas">{estrellas}</div>'
+        '<label for="titulo">Un titular (opcional)</label>'
+        '<input id="titulo" name="titulo" maxlength="80" '
+        'placeholder="Lo que más te ha gustado, o lo que menos">'
+        '<label for="texto">Tu opinión</label>'
+        '<textarea id="texto" name="texto" maxlength="1200" required '
+        'placeholder="¿Qué tal el sonido? ¿Y la funda? ¿Llegó cuando dijimos?"></textarea>'
+        '<label for="autor">Cómo quieres firmar</label>'
+        f'<input id="autor" name="autor" maxlength="40" value="{html.escape(nombre_pila)}" '
+        'placeholder="Tu nombre">'
+        '<button type="submit">Enviar mi opinión</button>'
+        '</form>'
+        '<div class="aviso"><strong>Solo opina quien ha comprado.</strong> Este enlace '
+        'va atado a tu número de pedido, así que en esta tienda no puede haber reseñas '
+        'inventadas. Se publican todas, buenas y malas.</div>')
+
+
+@app.route('/api/resenas')
+def api_resenas():
+    """Reseñas publicadas, para pintarlas en la portada."""
+    datos = [{
+        'autor': r.get('autor') or 'Cliente',
+        'puntuacion': r.get('puntuacion') or 5,
+        'titulo': r.get('titulo') or '',
+        'texto': r.get('texto') or '',
+        'fecha': str(r.get('created_at') or '')[:10],
+    } for r in listar_resenas(solo_publicadas=True)]
+    notas = [d['puntuacion'] for d in datos]
+    return jsonify({
+        'total': len(datos),
+        'media': round(sum(notas) / len(notas), 1) if notas else None,
+        'resenas': datos,
+    })
+
+
+@app.route('/admin/resena', methods=['POST'])
+@require_admin
+def admin_resena():
+    """Publicar, ocultar o borrar una reseña.
+
+    Ojo: borrar las malas y publicar solo las buenas es una práctica desleal
+    tipificada. Esto está para quitar spam o insultos, no para maquillar.
+    """
+    try:
+        rid = int(request.form.get('id') or '')
+    except ValueError:
+        return redirect('/admin')
+    accion = request.form.get('accion')
+    if accion == 'publicar':
+        cambiar_resena(rid, publicada=True)
+    elif accion == 'ocultar':
+        cambiar_resena(rid, publicada=False)
+    elif accion == 'borrar':
+        cambiar_resena(rid, borrar=True)
+    else:
+        return redirect('/admin')
+    return redirect('/admin?msg=' + quote(f'Reseña #{rid}: {accion}.'))
+
 
 # ── PÁGINAS LEGALES ───────────────────────────────────────────────────────────
 # El aviso legal y las condiciones llevan datos fiscales que la LSSI obliga a

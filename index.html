@@ -805,6 +805,26 @@
       color: var(--muted);
     }
 
+    /* ── RESENAS REALES ──────────────────────── */
+    .rejilla-resenas {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px; max-width: 1000px; margin: 0 auto;
+    }
+    .resena {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .resena-estrellas { color: var(--ambar); font-size: 15px; letter-spacing: 2px; }
+    .resena h4 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+    .resena p { font-size: 14.5px; color: var(--muted); line-height: 1.7; }
+    .resena-pie {
+      margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border);
+      font-size: 12.5px; color: var(--muted); display: flex;
+      justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .resena-pie b { color: var(--text); font-weight: 600; }
+    .verificada { color: var(--ambar); font-weight: 600; }
+
     /* ── ILUSTRACION DEL PACK ────────────────── */
     .pack-ilustracion { width: 100%; height: auto; display: block; }
 
@@ -1643,32 +1663,22 @@
 <!-- ── RESENAS ───────────────────────────────────────────────────── -->
 <section id="resenas" style="background: var(--bg2);">
   <div class="section-label">Opiniones</div>
-  <div class="section-title">Todavía<br/>no hay ninguna.</div>
+  <div class="section-title" id="resenas-titulo">Todavía<br/>no hay ninguna.</div>
+  <p class="section-sub" id="resenas-media" hidden></p>
 
-  <div class="sin-resenas reveal">
+  <!-- Estado por defecto. Solo se sustituye si el servidor devuelve reseñas
+       reales: si algo falla, se queda esto, que es la verdad. -->
+  <div class="sin-resenas reveal" id="sin-resenas">
     <div class="emo">🦉</div>
     <h3>Acabamos de abrir</h3>
     <p>No vamos a inventarnos reseñas para que esto parezca más lleno.
     Cuando haya clientes de verdad, sus opiniones estarán aquí — las buenas y las malas.
-    Si eres el primero y algo no te cuadra, escríbenos y lo arreglamos.</p>
+    Solo puede opinar quien ha comprado.</p>
   </div>
+
+  <div class="rejilla-resenas" id="lista-resenas" hidden></div>
 </section>
 
-
-<!-- ── TESTIMONIALS ───────────────────────────────────────────────── -->
-
-
-<!-- ── CTA BANNER ─────────────────────────────────────────────────── -->
-<div class="cta-banner">
-  <h2>Auriculares + funda OWL.<br/>39,95 € y en casa en 48 h.</h2>
-  <p>Pack completo con auriculares inalámbricos, funda OWL personalizada y mosquetón. Envío gratis desde España.</p>
-  <a href="#producto" class="btn-dark">
-    Comprar ahora
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-  </a>
-</div>
-
-<!-- ── FOOTER ─────────────────────────────────────────────────────── -->
 <div class="barra-movil" id="barra-movil">
   <div>
     <span class="bm-precio">39,95 €</span>
@@ -1773,6 +1783,68 @@
       localStorage.setItem('owl-theme', 'dark');
     }
   });
+
+  // ── RESENAS REALES ───────────────────────────────────────────────
+  // Se piden al servidor. Si no hay ninguna, o si falla la llamada, se queda
+  // el estado vacio honesto que ya esta en el HTML. Nunca se inventa nada.
+  (async function cargarResenas() {
+    let datos;
+    try {
+      const r = await fetch('/api/resenas');
+      if (!r.ok) return;
+      datos = await r.json();
+    } catch (e) { return; }
+    if (!datos || !datos.total) return;
+
+    const lista = document.getElementById('lista-resenas');
+    const vacio = document.getElementById('sin-resenas');
+    const titulo = document.getElementById('resenas-titulo');
+    const media = document.getElementById('resenas-media');
+
+    titulo.innerHTML = 'Lo que dicen<br/>quienes lo compraron.';
+    if (datos.media) {
+      media.textContent = datos.media.toFixed(1).replace('.', ',') +
+        ' de 5 · ' + datos.total + (datos.total === 1 ? ' opinión' : ' opiniones') +
+        ' de compras verificadas';
+      media.hidden = false;
+    }
+
+    for (const r of datos.resenas) {
+      const card = document.createElement('article');
+      card.className = 'resena';
+
+      const estrellas = document.createElement('div');
+      estrellas.className = 'resena-estrellas';
+      estrellas.textContent = '★'.repeat(r.puntuacion) + '☆'.repeat(5 - r.puntuacion);
+      card.appendChild(estrellas);
+
+      if (r.titulo) {
+        const h = document.createElement('h4');
+        h.textContent = r.titulo;          // textContent, nunca innerHTML:
+        card.appendChild(h);               // esto lo escribe un cliente.
+      }
+
+      const p = document.createElement('p');
+      p.textContent = r.texto;
+      card.appendChild(p);
+
+      const pie = document.createElement('div');
+      pie.className = 'resena-pie';
+      const quien = document.createElement('span');
+      quien.innerHTML = '<b></b>';
+      quien.querySelector('b').textContent = r.autor;
+      const sello = document.createElement('span');
+      sello.className = 'verificada';
+      sello.textContent = '✓ compra verificada';
+      pie.append(quien, sello);
+      card.appendChild(pie);
+
+      lista.appendChild(card);
+    }
+
+    vacio.hidden = true;
+    lista.hidden = false;
+  })();
 
   // ── NAV SCROLL ───────────────────────────────────────────────────
   const nav = document.getElementById('nav');
