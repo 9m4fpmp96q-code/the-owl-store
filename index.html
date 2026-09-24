@@ -1731,9 +1731,29 @@
   });
 
   // ── CART STATE (persistente) ─────────────────────────────────────
-  let cart = JSON.parse(localStorage.getItem('owl-cart') || '[]');
+  // Precios vigentes. Tiene que coincidir con catalogo.py: el servidor
+  // manda sobre esto, y si se separan el cliente ve un precio y paga otro.
+  const PRECIOS = { 'OWL Buds': 39.95 };
+
+  function limpiaCarrito(guardado) {
+    // El carrito vive en localStorage y sobrevive a los cambios de catálogo.
+    // Sin esto, quien tuviera el producto viejo guardado veía su precio viejo
+    // y pagaba el nuevo, porque el servidor ya no reconoce ese modelo.
+    if (!Array.isArray(guardado)) return [];
+    return guardado
+      .filter(i => i && PRECIOS[i.model] !== undefined)
+      .map(i => ({ ...i, price: PRECIOS[i.model], qty: Math.max(1, parseInt(i.qty) || 1) }));
+  }
+
+  let cart = [];
+  try {
+    cart = limpiaCarrito(JSON.parse(localStorage.getItem('owl-cart') || '[]'));
+  } catch (e) {
+    cart = [];   // JSON corrupto: mejor carrito vacío que página rota
+  }
 
   function saveCart() { localStorage.setItem('owl-cart', JSON.stringify(cart)); }
+  saveCart();   // reescribe el guardado ya saneado
 
   function getActiveModel() {
     return { model: 'OWL Buds', price: 39.95 };
