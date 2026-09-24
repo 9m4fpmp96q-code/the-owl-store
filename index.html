@@ -790,6 +790,50 @@
       color: var(--muted);
     }
 
+    /* ── FICHA TECNICA ───────────────────────── */
+    .specs-wrap { max-width: 760px; margin: 0 auto; }
+    .spec-row {
+      display: flex; justify-content: space-between; gap: 24px;
+      padding: 16px 0; border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+    .spec-row dt { color: var(--muted); }
+    .spec-row dd { font-weight: 600; text-align: right; }
+    .spec-nota {
+      margin-top: 28px; padding: 20px 22px; border-radius: 14px;
+      background: var(--bg2); border: 1px solid var(--border);
+      font-size: 14px; line-height: 1.7; color: var(--muted);
+    }
+    .spec-nota strong { color: var(--text); }
+
+    /* ── PREGUNTAS ───────────────────────────── */
+    .faq-wrap { max-width: 760px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item summary {
+      cursor: pointer; padding: 20px 0; font-size: 16px; font-weight: 600;
+      list-style: none; display: flex; justify-content: space-between;
+      align-items: center; gap: 16px; min-height: 44px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: '+'; font-size: 22px; color: var(--muted); font-weight: 400; }
+    .faq-item[open] summary::after { content: '−'; }
+    .faq-item p { padding: 0 0 20px; font-size: 15px; line-height: 1.75; color: var(--muted); max-width: 62ch; }
+
+    /* ── RESENAS ─────────────────────────────── */
+    .sin-resenas {
+      max-width: 560px; margin: 0 auto; text-align: center;
+      padding: 44px 28px; border-radius: 18px;
+      background: var(--bg2); border: 1px solid var(--border);
+    }
+    .sin-resenas .emo { font-size: 34px; }
+    .sin-resenas h3 { font-size: 18px; font-weight: 700; margin: 14px 0 10px; }
+    .sin-resenas p { font-size: 15px; color: var(--muted); line-height: 1.7; }
+
+    @media (max-width: 560px) {
+      .spec-row { flex-direction: column; gap: 4px; }
+      .spec-row dd { text-align: left; }
+    }
+
     /* ── SCROLLED NAV ────────────────────────── */
     nav.scrolled {
       background: var(--nav-scrolled);
@@ -1325,7 +1369,7 @@
   </div>
   <div class="trust-item">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-    Cambio en 15 días
+    14 días para devolver
   </div>
 </div>
 
@@ -1346,9 +1390,6 @@
     </div>
 
     <div class="product-info">
-      <div class="product-stars">
-        </div>
-
       <div class="product-name">Pack OWL<br/>Redmi Buds 6 Play</div>
       <p class="product-desc">Xiaomi Redmi Buds 6 Play + funda personalizada OWL + mosquetón de acero inoxidable. Sale de nuestro almacén en España: lo tienes en 48 horas, sin aduanas ni esperas.</p>
 
@@ -1357,7 +1398,7 @@
         
       </div>
 
-
+      <div class="urgency-bar">
         <span class="urgency-dot"></span>
         <span id="urgency-text">Sale de nuestro almacén en <strong>España</strong> · lo recibes en 48 h, sin aduanas</span>
       </div>
@@ -1380,7 +1421,7 @@
         </div>
         <div class="perk">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-          Cambio en 15 días por defecto de fábrica
+          14 días para devolver · 3 años de garantía
         </div>
         <div class="perk">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -1446,6 +1487,79 @@
   </div>
 </section>
 
+<!-- ── FICHA TECNICA ─────────────────────────────────────────────── -->
+<section id="ficha" style="background: var(--bg2);">
+  <div class="section-label">Ficha técnica</div>
+  <div class="section-title">Lo que hay<br/>dentro de la caja.</div>
+  <p class="section-sub">Datos del fabricante, sin adornos.</p>
+
+  <dl class="specs-wrap reveal">
+    <div class="spec-row"><dt>Altavoz</dt><dd>Driver dinámico de 10 mm</dd></div>
+    <div class="spec-row"><dt>Conexión</dt><dd>Bluetooth 5.4</dd></div>
+    <div class="spec-row"><dt>Autonomía</dt><dd>7,5 h por carga · hasta 36 h con el estuche</dd></div>
+    <div class="spec-row"><dt>Carga rápida</dt><dd>10 minutos = 3 horas de música</dd></div>
+    <div class="spec-row"><dt>Batería</dt><dd>57 mAh auricular · 600 mAh estuche</dd></div>
+    <div class="spec-row"><dt>Resistencia al agua</dt><dd>IPX4, solo los auriculares</dd></div>
+    <div class="spec-row"><dt>Micrófono</dt><dd>Reducción de ruido por IA en llamadas</dd></div>
+    <div class="spec-row"><dt>En el pack</dt><dd>Auriculares + funda OWL + mosquetón</dd></div>
+  </dl>
+
+  <div class="spec-nota reveal">
+    <strong>No tienen cancelación activa de ruido (ANC).</strong> Su reducción de ruido
+    es para las llamadas: limpia tu voz para quien te escucha, no silencia lo que oyes tú.
+    Te lo decimos antes de que compres y no después, porque es la diferencia que más
+    decepciona cuando nadie la explica.
+  </div>
+</section>
+
+<!-- ── PREGUNTAS ─────────────────────────────────────────────────── -->
+<section id="faq">
+  <div class="section-label">Dudas</div>
+  <div class="section-title">Preguntas<br/>frecuentes.</div>
+
+  <div class="faq-wrap reveal">
+    <details class="faq-item">
+      <summary>¿Cuánto tarda en llegar?</summary>
+      <p>24–48 horas en la península. Portugal y Baleares, 2–4 días hábiles. Resto de Europa, 3–5 días. Sale de almacén en España, así que no hay aduanas ni recargos sorpresa.</p>
+    </details>
+    <details class="faq-item">
+      <summary>¿Puedo devolverlo si no me convence?</summary>
+      <p>Sí. Tienes 14 días naturales desde que lo recibes para devolverlo sin dar ninguna explicación. No hace falta que esté defectuoso: basta con que hayas cambiado de opinión. Los gastos de la devolución corren por tu cuenta en ese caso.</p>
+    </details>
+    <details class="faq-item">
+      <summary>¿Qué garantía tienen?</summary>
+      <p>Tres años de garantía legal desde la entrega. Durante los dos primeros no tienes que demostrar nada: se presume que el defecto ya venía de fábrica. Si falla, lo reparamos o lo cambiamos sin coste, y el envío lo pagamos nosotros.</p>
+    </details>
+    <details class="faq-item">
+      <summary>¿Cancelan el ruido del metro o del avión?</summary>
+      <p>No. Estos auriculares no llevan cancelación activa (ANC). Su reducción de ruido actúa sobre el micrófono, para que se te oiga limpio en las llamadas. Si lo que buscas es silenciar el ruido de fuera, este no es tu producto.</p>
+    </details>
+    <details class="faq-item">
+      <summary>¿Funcionan con iPhone?</summary>
+      <p>Sí. Usan Bluetooth estándar, así que funcionan con cualquier móvil, tablet u ordenador con Bluetooth, sea Android, iPhone, Windows o Mac.</p>
+    </details>
+    <details class="faq-item">
+      <summary>¿Qué es exactamente la funda OWL?</summary>
+      <p>Una funda de silicona con el logo OWL grabado que envuelve el estuche de carga, más un mosquetón de acero inoxidable para engancharlo donde quieras. Protege de golpes y arañazos sin tapar el puerto de carga. Es la parte del pack que no vas a encontrar en otro sitio.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ── RESENAS ───────────────────────────────────────────────────── -->
+<section id="resenas" style="background: var(--bg2);">
+  <div class="section-label">Opiniones</div>
+  <div class="section-title">Todavía<br/>no hay ninguna.</div>
+
+  <div class="sin-resenas reveal">
+    <div class="emo">🦉</div>
+    <h3>Acabamos de abrir</h3>
+    <p>No vamos a inventarnos reseñas para que esto parezca más lleno.
+    Cuando haya clientes de verdad, sus opiniones estarán aquí — las buenas y las malas.
+    Si eres el primero y algo no te cuadra, escríbenos y lo arreglamos.</p>
+  </div>
+</section>
+
+
 <!-- ── TESTIMONIALS ───────────────────────────────────────────────── -->
 
 
@@ -1479,6 +1593,8 @@
       <h4>Producto</h4>
       <ul>
         <li><a href="#features">Características</a></li>
+        <li><a href="#ficha">Ficha técnica</a></li>
+        <li><a href="#faq">Preguntas frecuentes</a></li>
         <li><a href="#producto">Comprar</a></li>
       </ul>
     </div>
