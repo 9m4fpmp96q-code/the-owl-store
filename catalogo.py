@@ -94,12 +94,11 @@ def desglose(coste_compra, precio_venta, con_envio=True):
 # y con envío de sobre, mucho más barato.
 COSTE_ENVIO_SOBRE = 1.80
 
-PRECIO_FUNDA_SOLA = precio_sugerido(
-    FUNDA['coste_compra'] - COSTE_PACKAGING + 0.30,  # sobre acolchado, no caja
-    con_envio=False,
-) if False else 16.90   # fijado a mano: precio de entrada, margen ~65 %
+# Fijado a mano por el dueño el 2026-09-24. No sale de precio_sugerido():
+# es precio de entrada, pensado para que comprar la funda no se piense.
+PRECIO_FUNDA_SOLA = 12.95
 
-PRECIO_PACK_2_FUNDAS = 26.90
+PRECIO_PACK_2_FUNDAS = 21.90   # dos fundas: descuento real sobre 2 x 12,95
 
 PRECIOS_PACK = {modelo: PRECIO_PACK_FIJO for modelo in AURICULARES}
 
