@@ -1,0 +1,15 @@
+{
+  "type": "header",
+  "name": "Cabecera",
+  "sections": {
+    "cabecera": {
+      "type": "header",
+      "settings": {
+        "logo_text": "OWL",
+        "cta_label": "Comprar ahora",
+        "cta_link": "/#producto"
+      }
+    }
+  },
+  "order": ["cabecera"]
+}

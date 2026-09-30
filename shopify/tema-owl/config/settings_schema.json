@@ -1,0 +1,97 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "OWL",
+    "theme_version": "1.0.0",
+    "theme_author": "OWL Store",
+    "theme_documentation_url": "https://help.shopify.com/es/manual/online-store/themes",
+    "theme_support_email": "theowlstore26@gmail.com"
+  },
+  {
+    "name": "Marca",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon",
+        "info": "Si lo dejas vacío se usa el búho de OWL."
+      },
+      {
+        "type": "color",
+        "id": "color_ambar",
+        "label": "Ámbar de marca (modo claro)",
+        "default": "#a8641c"
+      },
+      {
+        "type": "color",
+        "id": "color_ambar_oscuro",
+        "label": "Ámbar de marca (modo oscuro)",
+        "default": "#d9a250"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_dark_mode",
+        "label": "Mostrar el botón de modo oscuro",
+        "default": true
+      }
+    ]
+  },
+  {
+    "name": "Tipografía",
+    "settings": [
+      {
+        "type": "font_picker",
+        "id": "type_font",
+        "label": "Fuente",
+        "default": "inter_n4",
+        "info": "Inter es la fuente de la marca. Se usa en todos los textos."
+      }
+    ]
+  },
+  {
+    "name": "Carrito",
+    "settings": [
+      {
+        "type": "text",
+        "id": "cart_shipping_text",
+        "label": "Texto de la línea «Envío»",
+        "default": "Gratis",
+        "info": "Déjalo vacío si cobras el envío: se calculará en la pantalla de pago."
+      },
+      {
+        "type": "text",
+        "id": "cart_note_text",
+        "label": "Nota bajo el botón de pago",
+        "default": "🔒 Pago seguro · Envío gratis · 24-48 h en España"
+      }
+    ]
+  },
+  {
+    "name": "WhatsApp",
+    "settings": [
+      {
+        "type": "text",
+        "id": "whatsapp_number",
+        "label": "Número de WhatsApp",
+        "info": "Formato internacional sin + ni espacios, p. ej. 34612345678. Vacío = el botón no aparece."
+      },
+      {
+        "type": "text",
+        "id": "whatsapp_message",
+        "label": "Mensaje inicial",
+        "default": "Hola, tengo una pregunta sobre el pack OWL 🦉"
+      }
+    ]
+  },
+  {
+    "name": "Redes sociales",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "social_image",
+        "label": "Imagen al compartir la tienda",
+        "info": "Se ve al pegar el enlace en WhatsApp o redes. Recomendado: 1200 × 628 px."
+      }
+    ]
+  }
+]

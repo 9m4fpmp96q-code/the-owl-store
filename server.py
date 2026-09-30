@@ -455,10 +455,11 @@ def notify_owner(order, auto_ok=False, auto_detalle=''):
     ganancia = ''
     if order.get('coste'):
         d = catalogo.desglose(0, order['price'])
-        neto = round(order['price'] - order['coste'] - d['comision'], 2)
+        # El precio lleva IVA incluido: esa parte va a Hacienda, no es ganancia.
+        neto = round(order['price'] - d['iva'] - order['coste'] - d['comision'], 2)
         ganancia = _row('Te queda', f"<span style='color:#0a7d32'>{neto:.2f} €</span> "
                                     f"<span style='color:#aaa;font-weight:400'>"
-                                    f"(coste {order['coste']:.2f} € + comisión {d['comision']:.2f} €)</span>")
+                                    f"(IVA {d['iva']:.2f} € + coste {order['coste']:.2f} € + comisión {d['comision']:.2f} €)</span>")
 
     if auto_ok:
         # Solo cuando hay proveedor conectado: el paquete no pasa por tu casa.
@@ -789,7 +790,8 @@ def admin():
         if not coste:
             return None
         comision = round((o['price'] or 0) * catalogo.STRIPE_PCT + catalogo.STRIPE_FIJO, 2)
-        return round((o['price'] or 0) - coste - comision, 2)
+        iva = catalogo.iva_de(o['price'] or 0)   # el IVA del precio es de Hacienda
+        return round((o['price'] or 0) - iva - coste - comision, 2)
 
     def envio_celda(o):
         if o.get('tracking'):

@@ -1,0 +1,51 @@
+{%- comment -%} Barra de confianza: ventajas cortas con icono, bajo la portada. {%- endcomment -%}
+{%- if section.blocks.size > 0 -%}
+  <div class="trust-bar">
+    {%- for block in section.blocks -%}
+      <div class="trust-item" {{ block.shopify_attributes }}>
+        {% render 'icon', nombre: block.settings.icon %}
+        {{ block.settings.text | escape }}
+      </div>
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Barra de confianza",
+  "max_blocks": 6,
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Ventaja",
+      "settings": [
+        {
+          "type": "select", "id": "icon", "label": "Icono", "default": "check",
+          "options": [
+            { "value": "escudo", "label": "Escudo" },
+            { "value": "check", "label": "Visto bueno" },
+            { "value": "camion", "label": "Camión" },
+            { "value": "pin", "label": "Ubicación" },
+            { "value": "regalo", "label": "Regalo" },
+            { "value": "tarjeta", "label": "Tarjeta" },
+            { "value": "devolver", "label": "Devolución" },
+            { "value": "maletin", "label": "Maletín" },
+            { "value": "reloj", "label": "Reloj" },
+            { "value": "corazon", "label": "Corazón" }
+          ]
+        },
+        { "type": "text", "id": "text", "label": "Texto", "default": "Envío gratis" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Barra de confianza",
+      "blocks": [
+        { "type": "item", "settings": { "icon": "camion", "text": "Envío gratis · 24-48 h en España" } },
+        { "type": "item", "settings": { "icon": "regalo", "text": "14 días para devolver" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

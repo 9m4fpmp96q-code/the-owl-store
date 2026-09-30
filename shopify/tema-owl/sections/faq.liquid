@@ -1,0 +1,46 @@
+{%- comment -%} Preguntas frecuentes, desplegables. {%- endcomment -%}
+{%- assign ss = section.settings -%}
+<section id="{{ ss.anchor | default: 'faq' | handleize }}" class="seccion{% if ss.alt_background %} seccion--alt{% endif %}">
+  {%- if ss.label != blank -%}<div class="section-label">{{ ss.label | escape }}</div>{%- endif -%}
+  {%- if ss.title != blank -%}<h2 class="section-title">{{ ss.title | escape | newline_to_br }}</h2>{%- endif -%}
+
+  <div class="faq-wrap reveal">
+    {%- for block in section.blocks -%}
+      <details class="faq-item" {{ block.shopify_attributes }}>
+        <summary>{{ block.settings.question | escape }}</summary>
+        <div class="faq-respuesta">{{ block.settings.answer }}</div>
+      </details>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Preguntas frecuentes",
+  "max_blocks": 16,
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancla", "default": "faq" },
+    { "type": "text", "id": "label", "label": "Etiqueta", "default": "Dudas" },
+    { "type": "textarea", "id": "title", "label": "Título", "default": "Preguntas\nfrecuentes." },
+    { "type": "checkbox", "id": "alt_background", "label": "Fondo alternativo", "default": false }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "Pregunta",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Pregunta", "default": "¿Cuánto tarda en llegar?" },
+        { "type": "richtext", "id": "answer", "label": "Respuesta", "default": "<p>Escribe aquí la respuesta.</p>" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Preguntas frecuentes",
+      "blocks": [
+        { "type": "question", "settings": { "question": "¿Cuánto tarda en llegar?", "answer": "<p>24–48 horas en la península.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,68 @@
+{%- comment -%}
+  Portada: titular, botón de compra, precio del producto elegido y la
+  ilustración del pack (o una imagen, si se sube una en el editor).
+{%- endcomment -%}
+{%- assign ss = section.settings -%}
+<section class="hero">
+  <div class="hero-text">
+    {%- if ss.badge != blank -%}
+      <div class="hero-badge">{{ ss.badge | escape }}</div>
+    {%- endif -%}
+    <h1>
+      {{- ss.heading | escape -}}
+      {%- if ss.heading_2 != blank %}<br><em>{{ ss.heading_2 | escape }}</em>{% endif -%}
+    </h1>
+    {%- if ss.text != blank -%}
+      <p class="hero-sub">{{ ss.text | escape }}</p>
+    {%- endif -%}
+    {%- if ss.button_label != blank -%}
+      <div class="hero-actions">
+        <a href="{{ ss.button_link | default: '#producto' }}" class="btn-primary">
+          {{ ss.button_label | escape }}
+          {% render 'icon', nombre: 'flecha', tamano: 16 %}
+        </a>
+      </div>
+    {%- endif -%}
+    {%- if ss.show_price and ss.product != blank -%}
+      <div class="hero-price-tag">
+        <span class="price">{{ ss.product.price | money_without_currency }}</span>
+        <span class="currency">{{ cart.currency.symbol }}</span>
+        {%- if ss.price_label != blank -%}
+          <span class="label">{{ ss.price_label | escape }}</span>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-img-wrap">
+      {%- if ss.image != blank -%}
+        {%- assign alt_hero = ss.image.alt | default: ss.heading -%}
+        {{ ss.image | image_url: width: 1000 | image_tag: loading: 'eager', widths: '500, 800, 1000', sizes: '(max-width: 900px) 300px, 480px', alt: alt_hero }}
+      {%- else -%}
+        {% render 'ilustracion-pack' %}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Portada",
+  "settings": [
+    { "type": "text", "id": "badge", "label": "Etiqueta superior", "default": "Envío desde España · 48 h" },
+    { "type": "text", "id": "heading", "label": "Titular", "default": "Auriculares con funda OWL." },
+    { "type": "text", "id": "heading_2", "label": "Segunda línea del titular (en gris)", "default": "En tu casa en 48 horas." },
+    { "type": "textarea", "id": "text", "label": "Texto", "default": "OWL Buds con la funda personalizada OWL y mosquetón de acero. Sale de nuestro almacén en España: sin aduanas, sin esperar tres semanas y con devolución de 14 días." },
+    { "type": "text", "id": "button_label", "label": "Texto del botón", "default": "Comprar ahora" },
+    { "type": "text", "id": "button_link", "label": "Enlace del botón", "default": "#producto", "info": "#producto baja hasta la ficha del producto de la portada." },
+    { "type": "header", "content": "Precio" },
+    { "type": "product", "id": "product", "label": "Producto del que se muestra el precio" },
+    { "type": "checkbox", "id": "show_price", "label": "Mostrar el precio", "default": true },
+    { "type": "text", "id": "price_label", "label": "Texto junto al precio", "default": "· envío gratis" },
+    { "type": "header", "content": "Imagen" },
+    { "type": "image_picker", "id": "image", "label": "Imagen", "info": "Si la dejas vacía se muestra la ilustración del pack. Usa solo fotos del producto real." }
+  ],
+  "presets": [{ "name": "Portada OWL" }]
+}
+{% endschema %}

@@ -1,0 +1,34 @@
+{%- comment -%} Detalle de un pedido del cliente. {%- endcomment -%}
+<div class="pagina">
+  <span class="page-label"><a href="{{ routes.account_url }}">{{ 'customer.account.back' | t }}</a></span>
+  <h1>{{ 'customer.order.title' | t: nombre: order.name }}</h1>
+  <p class="pagina-sub">{{ order.created_at | date: '%d/%m/%Y' }} · {{ order.financial_status_label }} · {{ order.fulfillment_status_label }}</p>
+
+  <div class="rte">
+    <table>
+      <tr><th>{{ 'customer.order.product' | t }}</th><th>{{ 'customer.order.quantity' | t }}</th><th>{{ 'customer.order.total' | t }}</th></tr>
+      {%- for linea in order.line_items -%}
+        <tr>
+          <td>
+            {{ linea.title | escape }}
+            {%- if linea.fulfillment -%}
+              <br><small>{{ linea.fulfillment.tracking_company }} {% if linea.fulfillment.tracking_url %}<a href="{{ linea.fulfillment.tracking_url }}">{{ linea.fulfillment.tracking_number }}</a>{% endif %}</small>
+            {%- endif -%}
+          </td>
+          <td>{{ linea.quantity }}</td>
+          <td>{{ linea.final_line_price | money }}</td>
+        </tr>
+      {%- endfor -%}
+      <tr><td colspan="2">{{ 'customer.order.subtotal' | t }}</td><td>{{ order.line_items_subtotal_price | money }}</td></tr>
+      {%- for envio in order.shipping_methods -%}
+        <tr><td colspan="2">{{ 'customer.order.shipping' | t }} ({{ envio.title | escape }})</td><td>{{ envio.price | money }}</td></tr>
+      {%- endfor -%}
+      <tr><td colspan="2"><strong>{{ 'customer.order.total' | t }}</strong></td><td><strong>{{ order.total_price | money }}</strong></td></tr>
+    </table>
+
+    {%- if order.shipping_address -%}
+      <h2>{{ 'customer.order.shipping_address' | t }}</h2>
+      <p>{{ order.shipping_address | format_address }}</p>
+    {%- endif -%}
+  </div>
+</div>

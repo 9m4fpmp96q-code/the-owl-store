@@ -1,0 +1,59 @@
+{%- comment -%}
+  Página de producto. Misma ficha que la portada, con el título como <h1>,
+  datos estructurados para Google y hueco para bloques de apps (reseñas).
+{%- endcomment -%}
+<section id="producto" class="seccion seccion--alt" data-section="{{ section.id }}">
+  {% render 'product-detail', product: product, section: section, es_principal: true %}
+
+  {%- for block in section.blocks -%}
+    {%- if block.type == '@app' -%}
+      <div class="bloque-app" style="max-width:1280px;margin:40px auto 0" {{ block.shopify_attributes }}>
+        {% render block %}
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+</section>
+
+<script type="application/ld+json">
+  {{ product | structured_data }}
+</script>
+
+{% schema %}
+{
+  "name": "Ficha de producto",
+  "settings": [
+    { "type": "checkbox", "id": "show_illustration", "label": "Mostrar la ilustración en lugar de las fotos", "default": true, "info": "Desmárcalo cuando subas fotos del producto real." },
+    { "type": "text", "id": "illustration_note", "label": "Nota bajo la ilustración", "default": "Ilustración. Las fotos reales llegan con la primera producción." },
+    { "type": "inline_richtext", "id": "urgency_text", "label": "Aviso sobre el botón", "default": "Sale de nuestro almacén en <b>España</b> · lo recibes en 48 h, sin aduanas" },
+    { "type": "text", "id": "button_label", "label": "Texto del botón de compra", "default": "Comprar ahora" },
+    { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Mostrar botones de pago rápido (Apple Pay, Google Pay…)", "default": false },
+    { "type": "header", "content": "Barra de compra en el móvil" },
+    { "type": "checkbox", "id": "show_mobile_bar", "label": "Mostrar la barra", "default": true },
+    { "type": "text", "id": "mobile_bar_subtitle", "label": "Subtítulo", "default": "Envío gratis" },
+    { "type": "text", "id": "mobile_bar_button", "label": "Texto del botón", "default": "Comprar" }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    {
+      "type": "perk",
+      "name": "Ventaja",
+      "settings": [
+        {
+          "type": "select", "id": "icon", "label": "Icono", "default": "check",
+          "options": [
+            { "value": "camion", "label": "Camión" },
+            { "value": "tarjeta", "label": "Tarjeta" },
+            { "value": "devolver", "label": "Devolución" },
+            { "value": "maletin", "label": "Maletín" },
+            { "value": "escudo", "label": "Escudo" },
+            { "value": "check", "label": "Visto bueno" },
+            { "value": "regalo", "label": "Regalo" },
+            { "value": "reloj", "label": "Reloj" }
+          ]
+        },
+        { "type": "text", "id": "text", "label": "Texto", "default": "Pago 100 % seguro" }
+      ]
+    }
+  ]
+}
+{% endschema %}

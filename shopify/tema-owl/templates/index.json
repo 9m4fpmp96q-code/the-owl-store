@@ -1,0 +1,235 @@
+{
+  "sections": {
+    "portada": {
+      "type": "hero",
+      "settings": {
+        "product": "pack-owl"
+      }
+    },
+    "confianza": {
+      "type": "trust-bar",
+      "blocks": {
+        "item-1": {
+          "type": "item",
+          "settings": {
+            "icon": "escudo",
+            "text": "OWL Buds originales"
+          }
+        },
+        "item-2": {
+          "type": "item",
+          "settings": {
+            "icon": "check",
+            "text": "Funda OWL personalizada"
+          }
+        },
+        "item-3": {
+          "type": "item",
+          "settings": {
+            "icon": "camion",
+            "text": "Envío gratis · 24-48 h en España"
+          }
+        },
+        "item-4": {
+          "type": "item",
+          "settings": {
+            "icon": "pin",
+            "text": "Mosquetón de acero incluido"
+          }
+        },
+        "item-5": {
+          "type": "item",
+          "settings": {
+            "icon": "regalo",
+            "text": "14 días para devolver"
+          }
+        }
+      },
+      "block_order": [
+        "item-1",
+        "item-2",
+        "item-3",
+        "item-4",
+        "item-5"
+      ],
+      "settings": {}
+    },
+    "producto": {
+      "type": "featured-product",
+      "settings": {
+        "product": "pack-owl"
+      },
+      "blocks": {
+        "perk-1": {
+          "type": "perk",
+          "settings": {
+            "icon": "camion",
+            "text": "Envío gratis · 24-48 h en España"
+          }
+        },
+        "perk-2": {
+          "type": "perk",
+          "settings": {
+            "icon": "tarjeta",
+            "text": "Pago 100 % seguro"
+          }
+        },
+        "perk-3": {
+          "type": "perk",
+          "settings": {
+            "icon": "devolver",
+            "text": "14 días para devolver · 3 años de garantía"
+          }
+        },
+        "perk-4": {
+          "type": "perk",
+          "settings": {
+            "icon": "maletin",
+            "text": "Funda OWL personalizada incluida"
+          }
+        }
+      },
+      "block_order": [
+        "perk-1",
+        "perk-2",
+        "perk-3",
+        "perk-4"
+      ]
+    },
+    "caracteristicas": {
+      "type": "features",
+      "blocks": {
+        "feature-1": {
+          "type": "feature",
+          "settings": {
+            "icon": "escudo",
+            "title": "Auriculares OWL",
+            "text": "Diseñados y fabricados con nuestra marca, no revendidos. Publicaremos las características cuando la fábrica las confirme una por una."
+          }
+        },
+        "feature-2": {
+          "type": "feature",
+          "settings": {
+            "icon": "reloj",
+            "title": "Funda OWL incluida",
+            "text": "Silicona con el logo OWL grabado. Protege el estuche de golpes y arañazos sin añadir volumen ni tapar el puerto de carga."
+          }
+        },
+        "feature-3": {
+          "type": "feature",
+          "settings": {
+            "icon": "enlace",
+            "title": "Mosquetón de regalo",
+            "text": "Clip metálico de acero inoxidable incluido. Engánchalo a tu mochila, cinturón o bolsa y tenlo siempre a mano."
+          }
+        },
+        "feature-4": {
+          "type": "feature",
+          "settings": {
+            "icon": "capas",
+            "title": "Todo incluido",
+            "text": "Auriculares + cover OWL personalizado + mosquetón. Listo para usar o para regalar. No necesitas comprar nada más aparte."
+          }
+        },
+        "feature-5": {
+          "type": "feature",
+          "settings": {
+            "icon": "sonido",
+            "title": "Llega en 48 horas",
+            "text": "Sale de nuestro almacén en España, no de China. Sin aduanas, sin recargos sorpresa y con devolución de 14 días que sí puedes usar."
+          }
+        },
+        "feature-6": {
+          "type": "feature",
+          "settings": {
+            "icon": "corazon",
+            "title": "Edición exclusiva",
+            "text": "El cover OWL personalizado convierte tu estuche en un accesorio con identidad propia. No lo encontrarás en ninguna otra tienda."
+          }
+        }
+      },
+      "block_order": [
+        "feature-1",
+        "feature-2",
+        "feature-3",
+        "feature-4",
+        "feature-5",
+        "feature-6"
+      ],
+      "settings": {}
+    },
+    "ficha": {
+      "type": "rich-note",
+      "settings": {}
+    },
+    "faq": {
+      "type": "faq",
+      "blocks": {
+        "question-1": {
+          "type": "question",
+          "settings": {
+            "question": "¿Cuánto tarda en llegar?",
+            "answer": "<p>24–48 horas en la península. Portugal y Baleares, 2–4 días hábiles. Resto de Europa, 3–5 días. Sale de almacén en España, así que no hay aduanas ni recargos sorpresa.</p>"
+          }
+        },
+        "question-2": {
+          "type": "question",
+          "settings": {
+            "question": "¿Puedo devolverlo si no me convence?",
+            "answer": "<p>Sí. Tienes 14 días naturales desde que lo recibes para devolverlo sin dar ninguna explicación. No hace falta que esté defectuoso: basta con que hayas cambiado de opinión. Los gastos de la devolución corren por tu cuenta en ese caso.</p>"
+          }
+        },
+        "question-3": {
+          "type": "question",
+          "settings": {
+            "question": "¿Qué garantía tienen?",
+            "answer": "<p>Tres años de garantía legal desde la entrega. Durante los dos primeros no tienes que demostrar nada: se presume que el defecto ya venía de fábrica. Si falla, lo reparamos o lo cambiamos sin coste, y el envío lo pagamos nosotros.</p>"
+          }
+        },
+        "question-4": {
+          "type": "question",
+          "settings": {
+            "question": "¿Cancelan el ruido del metro o del avión?",
+            "answer": "<p>Todavía no podemos responderte, y preferimos decírtelo así. Los OWL Buds están en fabricación y no vamos a prometer cancelación activa de ruido hasta tener una unidad probada en la mano. En cuanto la fábrica lo confirme, lo pondremos aquí — diga lo que diga.</p>"
+          }
+        },
+        "question-5": {
+          "type": "question",
+          "settings": {
+            "question": "¿Funcionan con iPhone?",
+            "answer": "<p>Sí. Usan Bluetooth estándar, así que funcionan con cualquier móvil, tablet u ordenador con Bluetooth, sea Android, iPhone, Windows o Mac.</p>"
+          }
+        },
+        "question-6": {
+          "type": "question",
+          "settings": {
+            "question": "¿Qué es exactamente la funda OWL?",
+            "answer": "<p>Una funda de silicona con el logo OWL grabado que envuelve el estuche de carga, más un mosquetón de acero inoxidable para engancharlo donde quieras. Protege de golpes y arañazos sin tapar el puerto de carga. Es la parte del pack que no vas a encontrar en otro sitio.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "question-1",
+        "question-2",
+        "question-3",
+        "question-4",
+        "question-5",
+        "question-6"
+      ],
+      "settings": {}
+    },
+    "resenas": {
+      "type": "reviews",
+      "settings": {}
+    }
+  },
+  "order": [
+    "portada",
+    "confianza",
+    "producto",
+    "caracteristicas",
+    "ficha",
+    "faq",
+    "resenas"
+  ]
+}

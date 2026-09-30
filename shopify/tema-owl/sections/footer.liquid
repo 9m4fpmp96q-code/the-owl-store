@@ -1,0 +1,104 @@
+{%- comment -%}
+  Pie de página. Cada columna usa un menú de Shopify si se elige uno;
+  si no, pone sus enlaces predefinidos (portada, políticas, contacto), así
+  la tienda tiene enlaces legales desde el primer día.
+{%- endcomment -%}
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="{{ routes.root_url }}" class="nav-logo">
+        {% render 'logo-owl' %}
+        <span>{{ section.settings.logo_text | default: shop.name | escape }}</span>
+      </a>
+      {%- if section.settings.text != blank -%}
+        <p>{{ section.settings.text | escape }}</p>
+      {%- endif -%}
+    </div>
+
+    {%- for block in section.blocks -%}
+      <div class="footer-col" {{ block.shopify_attributes }}>
+        <h4>{{ block.settings.heading | escape }}</h4>
+        <ul>
+          {%- if block.settings.menu != blank -%}
+            {%- for link in block.settings.menu.links -%}
+              <li><a href="{{ link.url }}">{{ link.title | escape }}</a></li>
+            {%- endfor -%}
+          {%- else -%}
+            {%- case block.settings.default_links -%}
+              {%- when 'producto' -%}
+                <li><a href="{{ routes.root_url }}#features">{{ 'footer.features' | t }}</a></li>
+                <li><a href="{{ routes.root_url }}#ficha">{{ 'footer.specs' | t }}</a></li>
+                <li><a href="{{ routes.root_url }}#faq">{{ 'footer.faq' | t }}</a></li>
+                <li><a href="{{ routes.root_url }}#producto">{{ 'footer.buy' | t }}</a></li>
+              {%- when 'soporte' -%}
+                {%- if shop.shipping_policy.url != blank -%}
+                  <li><a href="{{ shop.shipping_policy.url }}">{{ 'footer.shipping' | t }}</a></li>
+                {%- endif -%}
+                {%- if shop.refund_policy.url != blank -%}
+                  <li><a href="{{ shop.refund_policy.url }}">{{ 'footer.returns' | t }}</a></li>
+                  <li><a href="{{ shop.refund_policy.url }}">{{ 'footer.warranty' | t }}</a></li>
+                {%- endif -%}
+                {%- assign pagina_contacto = pages['contacto'] -%}
+                {%- if pagina_contacto.url != blank -%}
+                  <li><a href="{{ pagina_contacto.url }}">{{ 'footer.contact' | t }}</a></li>
+                {%- endif -%}
+              {%- when 'legal' -%}
+                {%- for politica in shop.policies -%}
+                  {%- if politica.url contains 'legal-notice' -%}
+                    <li><a href="{{ politica.url }}">{{ 'footer.legal_notice' | t }}</a></li>
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- if shop.terms_of_service.url != blank -%}
+                  <li><a href="{{ shop.terms_of_service.url }}">{{ 'footer.terms' | t }}</a></li>
+                {%- endif -%}
+                {%- if shop.privacy_policy.url != blank -%}
+                  <li><a href="{{ shop.privacy_policy.url }}">{{ 'footer.privacy' | t }}</a></li>
+                  <li><a href="{{ shop.privacy_policy.url }}">{{ 'footer.cookies' | t }}</a></li>
+                {%- endif -%}
+            {%- endcase -%}
+          {%- endif -%}
+        </ul>
+      </div>
+    {%- endfor -%}
+  </div>
+
+  <div class="footer-bottom">
+    <span>© {{ 'now' | date: '%Y' }} {{ section.settings.copyright | escape }}</span>
+    <span>{{ section.settings.tagline | escape }}</span>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Pie de página",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Texto del logo", "default": "OWL" },
+    { "type": "textarea", "id": "text", "label": "Texto bajo el logo", "default": "Accesorios con carácter para tu tecnología. Diseñados con actitud, hechos para durar." },
+    { "type": "text", "id": "copyright", "label": "Texto tras el año", "default": "OWL Accessories. Todos los derechos reservados." },
+    { "type": "text", "id": "tagline", "label": "Frase de la derecha", "default": "Hecho con ♥ para Europa" }
+  ],
+  "blocks": [
+    {
+      "type": "column",
+      "name": "Columna de enlaces",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Título", "default": "Enlaces" },
+        { "type": "link_list", "id": "menu", "label": "Menú", "info": "Si lo dejas vacío se usan los enlaces predefinidos de abajo." },
+        {
+          "type": "select",
+          "id": "default_links",
+          "label": "Enlaces predefinidos",
+          "default": "producto",
+          "options": [
+            { "value": "producto", "label": "Producto (secciones de la portada)" },
+            { "value": "soporte", "label": "Soporte (envíos, devoluciones, contacto)" },
+            { "value": "legal", "label": "Legal (aviso legal, condiciones, privacidad)" },
+            { "value": "ninguno", "label": "Ninguno" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

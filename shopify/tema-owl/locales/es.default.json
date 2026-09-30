@@ -1,0 +1,172 @@
+{
+  "general": {
+    "skip_to_content": "Saltar al contenido",
+    "theme_toggle": "Cambiar entre modo claro y oscuro",
+    "whatsapp": "Contactar por WhatsApp",
+    "close": "Cerrar",
+    "page": "Página {{ page }}",
+    "pagination": "Paginación",
+    "illustration_alt": "Ilustración del pack OWL: auriculares, funda con el logo del búho y mosquetón",
+    "404_title": "Página no encontrada",
+    "404_text": "Parece que esta página no existe o se ha movido. Vuelve a la tienda y encuentra tu pack OWL.",
+    "404_link": "← Volver a la tienda"
+  },
+  "header": {
+    "features": "Características",
+    "buy": "Comprar"
+  },
+  "footer": {
+    "features": "Características",
+    "specs": "Ficha técnica",
+    "faq": "Preguntas frecuentes",
+    "buy": "Comprar",
+    "shipping": "Envíos",
+    "returns": "Devoluciones",
+    "warranty": "Garantía",
+    "contact": "Contacto",
+    "legal_notice": "Aviso legal",
+    "terms": "Condiciones de compra",
+    "privacy": "Privacidad",
+    "cookies": "Cookies"
+  },
+  "products": {
+    "add_to_cart": "Comprar ahora",
+    "sold_out": "Agotado",
+    "from_price": "Desde {{ precio }}",
+    "view_image": "Ver imagen {{ numero }}",
+    "placeholder_title": "Pack OWL",
+    "choose_product": "Elige un producto para esta sección en el editor del tema (Tienda online → Personalizar)."
+  },
+  "cart": {
+    "title": "Tu carrito",
+    "open": "Carrito",
+    "empty": "Tu carrito está vacío",
+    "subtotal": "Subtotal",
+    "shipping": "Envío",
+    "total": "Total",
+    "checkout": "Finalizar pedido",
+    "continue": "Seguir comprando",
+    "update": "Actualizar",
+    "remove": "Quitar",
+    "quantity": "Cantidad",
+    "increase": "Añadir uno más",
+    "decrease": "Quitar uno",
+    "added": "✓ Añadido al carrito",
+    "error": "No se ha podido actualizar el carrito. Inténtalo de nuevo."
+  },
+  "collections": {
+    "label": "Colección",
+    "all_title": "Colecciones",
+    "empty": "Todavía no hay productos en esta colección.",
+    "product_count": {
+      "one": "{{ count }} producto",
+      "other": "{{ count }} productos"
+    }
+  },
+  "search": {
+    "title": "Buscar",
+    "placeholder": "¿Qué buscas?",
+    "submit": "Buscar",
+    "results_count": {
+      "one": "{{ count }} resultado para «{{ terms }}»",
+      "other": "{{ count }} resultados para «{{ terms }}»"
+    }
+  },
+  "blogs": {
+    "label": "Blog",
+    "empty": "Todavía no hay artículos.",
+    "back": "← Volver al blog"
+  },
+  "contact": {
+    "name": "Nombre",
+    "email": "Email",
+    "order": "Número de pedido (si lo tienes)",
+    "message": "Mensaje",
+    "send": "Enviar mensaje",
+    "success": "Gracias. Hemos recibido tu mensaje y te respondemos en menos de 48 h."
+  },
+  "password": {
+    "email": "Tu email",
+    "notify": "Avisadme",
+    "subscribed": "Hecho. Te escribiremos el día que abramos.",
+    "consent": "Solo usaremos tu email para avisarte de la apertura.",
+    "owner": "¿Eres el dueño de la tienda?",
+    "password": "Contraseña",
+    "enter": "Entrar",
+    "powered": "Tienda en preparación"
+  },
+  "gift_card": {
+    "title": "Tu tarjeta regalo",
+    "balance": "Saldo disponible: {{ saldo }}",
+    "expires": "Caduca el {{ fecha }}",
+    "disabled": "Esta tarjeta regalo ya no está activa.",
+    "shop": "Ir a la tienda"
+  },
+  "customer": {
+    "label": "Tu cuenta",
+    "email": "Email",
+    "password": "Contraseña",
+    "password_confirm": "Repite la contraseña",
+    "first_name": "Nombre",
+    "last_name": "Apellidos",
+    "logout": "Cerrar sesión",
+    "login": {
+      "title": "Iniciar sesión",
+      "submit": "Entrar",
+      "create": "Crear una cuenta"
+    },
+    "recover": {
+      "title": "¿Has olvidado la contraseña?",
+      "submit": "Enviarme un enlace",
+      "success": "Te hemos enviado un email con un enlace para cambiarla."
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "submit": "Crear cuenta"
+    },
+    "activate": {
+      "title": "Activa tu cuenta",
+      "submit": "Activar"
+    },
+    "reset": {
+      "title": "Nueva contraseña",
+      "submit": "Guardar contraseña"
+    },
+    "account": {
+      "title": "Mi cuenta",
+      "orders": "Pedidos",
+      "no_orders": "Todavía no has hecho ningún pedido.",
+      "address": "Dirección principal",
+      "manage_addresses": {
+        "one": "Gestionar direcciones ({{ count }})",
+        "other": "Gestionar direcciones ({{ count }})"
+      },
+      "back": "← Volver a mi cuenta"
+    },
+    "order": {
+      "title": "Pedido {{ nombre }}",
+      "number": "Pedido",
+      "date": "Fecha",
+      "status": "Estado",
+      "total": "Total",
+      "product": "Producto",
+      "quantity": "Cantidad",
+      "subtotal": "Subtotal",
+      "shipping": "Envío",
+      "shipping_address": "Dirección de envío"
+    },
+    "addresses": {
+      "title": "Mis direcciones",
+      "default": "Dirección principal",
+      "delete": "Eliminar",
+      "add": "Añadir una dirección",
+      "address1": "Dirección",
+      "city": "Ciudad",
+      "zip": "Código postal",
+      "country": "País",
+      "phone": "Teléfono",
+      "set_default": "Usar como dirección principal",
+      "save": "Guardar dirección"
+    }
+  }
+}

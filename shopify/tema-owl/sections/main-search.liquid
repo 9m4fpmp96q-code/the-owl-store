@@ -1,0 +1,50 @@
+{%- comment -%} Buscador y resultados. {%- endcomment -%}
+<div class="seccion">
+  <div class="cabecera-listado">
+    <h1 class="section-title">{{ 'search.title' | t }}</h1>
+    <form action="{{ routes.search_url }}" method="get" role="search" class="buscador">
+      <input type="search" name="q" value="{{ search.terms | escape }}" placeholder="{{ 'search.placeholder' | t }}" aria-label="{{ 'search.placeholder' | t }}">
+      <input type="hidden" name="options[prefix]" value="last">
+      <button type="submit" class="btn-primary">{{ 'search.submit' | t }}</button>
+    </form>
+    {%- if search.performed -%}
+      {%- assign terminos = search.terms | escape -%}
+      <p class="section-sub">{{ 'search.results_count' | t: count: search.results_count, terms: terminos }}</p>
+    {%- endif -%}
+  </div>
+
+  {%- if search.performed and search.results_count > 0 -%}
+    {%- paginate search.results by 24 -%}
+      {%- assign productos = search.results | where: 'object_type', 'product' -%}
+      {%- assign otros = search.results | where: 'object_type', 'page' -%}
+      {%- assign articulos = search.results | where: 'object_type', 'article' -%}
+      {%- if productos.size > 0 -%}
+        <div class="rejilla">
+          {%- for producto in productos -%}
+            {% render 'tarjeta-producto', producto: producto %}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+      {%- if otros.size > 0 or articulos.size > 0 -%}
+        <ul class="lista-simple" style="margin:48px auto 0">
+          {%- for resultado in otros -%}
+            <li><a href="{{ resultado.url }}">{{ resultado.title | escape }}</a></li>
+          {%- endfor -%}
+          {%- for resultado in articulos -%}
+            <li><a href="{{ resultado.url }}">{{ resultado.title | escape }}</a></li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+      {%- if paginate.pages > 1 -%}
+        <nav class="paginacion" aria-label="{{ 'general.pagination' | t }}">{{ paginate | default_pagination }}</nav>
+      {%- endif -%}
+    {%- endpaginate -%}
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Búsqueda",
+  "settings": []
+}
+{% endschema %}

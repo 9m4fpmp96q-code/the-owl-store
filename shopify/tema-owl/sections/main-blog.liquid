@@ -1,0 +1,27 @@
+{%- comment -%} Blog: lista de artículos. {%- endcomment -%}
+<div class="pagina">
+  <span class="page-label">{{ 'blogs.label' | t }}</span>
+  <h1>{{ blog.title | escape }}</h1>
+  {%- paginate blog.articles by 10 -%}
+    <ul class="lista-simple">
+      {%- for articulo in blog.articles -%}
+        <li>
+          <a href="{{ articulo.url }}">{{ articulo.title | escape }}</a>
+          <p>{{ articulo.published_at | date: '%d/%m/%Y' }}{% if articulo.excerpt_or_content != blank %} · {{ articulo.excerpt_or_content | strip_html | truncatewords: 30 }}{% endif %}</p>
+        </li>
+      {%- else -%}
+        <li><p>{{ 'blogs.empty' | t }}</p></li>
+      {%- endfor -%}
+    </ul>
+    {%- if paginate.pages > 1 -%}
+      <nav class="paginacion" aria-label="{{ 'general.pagination' | t }}">{{ paginate | default_pagination }}</nav>
+    {%- endif -%}
+  {%- endpaginate -%}
+</div>
+
+{% schema %}
+{
+  "name": "Blog",
+  "settings": []
+}
+{% endschema %}

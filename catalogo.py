@@ -15,8 +15,17 @@ STRIPE_PCT        = 0.015  # 1,5 % tarjetas del EEE
 STRIPE_FIJO       = 0.25
 TASA_DEVOLUCIONES = 0.08   # 8 % de pedidos que vuelven o fallan
 
-# Margen objetivo sobre el precio de venta (no sobre el coste).
-# 0.50 = la mitad de lo que cobras es tuyo antes de publicidad.
+# ── IVA ───────────────────────────────────────────────────────────────────────
+# Los precios de venta llevan el IVA incluido (así lo dicen las condiciones de
+# compra), y ese IVA no es tuyo: se ingresa a Hacienda. Antes no se descontaba
+# y el beneficio salía inflado (19 € por pack en vez de 12 €).
+# 21 % = régimen general. Los costes de este archivo se entienden sin IVA,
+# porque el IVA que pagas al comprar lo recuperas. Si estás en recargo de
+# equivalencia la cuenta es distinta: confírmalo con tu gestor.
+IVA = 0.21
+
+# Margen objetivo sobre lo que ingresas de verdad: el precio SIN IVA.
+# 0.50 = la mitad de lo que ingresas es tuyo antes de publicidad.
 MARGEN_OBJETIVO = 0.50
 
 # ── COSTES DE COMPRA ──────────────────────────────────────────────────────────
@@ -63,6 +72,16 @@ def _redondea_comercial(precio):
     return round((decenas + 1) * 10 + 9.90, 2)
 
 
+def sin_iva(precio):
+    """Lo que ingresas de verdad de un precio con IVA incluido."""
+    return round(precio / (1 + IVA), 2)
+
+
+def iva_de(precio):
+    """La parte de un precio con IVA incluido que va a Hacienda."""
+    return round(precio - sin_iva(precio), 2)
+
+
 def coste_total(coste_compra, con_envio=True):
     """Lo que te cuesta servir una unidad, sin contar la comisión de pago."""
     base = coste_compra + COSTE_PACKAGING + (COSTE_ENVIO if con_envio else 0)
@@ -70,23 +89,33 @@ def coste_total(coste_compra, con_envio=True):
 
 
 def precio_sugerido(coste_compra, con_envio=True, margen=None):
-    """Precio de venta que deja el margen objetivo, ya redondeado."""
+    """Precio de venta (IVA incluido) que deja el margen objetivo, ya redondeado.
+
+    Sale de despejar P en: P/(1+IVA) − coste − (P·comisión% + fijo) = margen · P/(1+IVA).
+    La comisión de pago se calcula sobre lo que paga el cliente, IVA incluido.
+    """
     m = MARGEN_OBJETIVO if margen is None else margen
-    bruto = (coste_total(coste_compra, con_envio) + STRIPE_FIJO) / (1 - m - STRIPE_PCT)
+    bruto = (coste_total(coste_compra, con_envio) + STRIPE_FIJO) / ((1 - m) / (1 + IVA) - STRIPE_PCT)
     return _redondea_comercial(bruto)
 
 
 def desglose(coste_compra, precio_venta, con_envio=True):
-    """Qué se lleva cada uno en una venta. Para el panel de pedidos."""
-    coste   = coste_total(coste_compra, con_envio)
+    """Qué se lleva cada uno en una venta con IVA incluido. Para el panel de pedidos.
+
+    margen_pct es el beneficio sobre el precio sin IVA, que es lo que ingresas.
+    """
+    coste    = coste_total(coste_compra, con_envio)
+    iva      = iva_de(precio_venta)
     comision = round(precio_venta * STRIPE_PCT + STRIPE_FIJO, 2)
-    neto    = round(precio_venta - coste - comision, 2)
+    neto     = round(precio_venta - iva - coste - comision, 2)
+    base     = sin_iva(precio_venta)
     return {
         'precio_venta': round(precio_venta, 2),
+        'iva':          iva,
         'coste':        coste,
         'comision':     comision,
         'beneficio':    neto,
-        'margen_pct':   round(neto / precio_venta * 100, 1) if precio_venta else 0.0,
+        'margen_pct':   round(neto / base * 100, 1) if base else 0.0,
     }
 
 
@@ -115,13 +144,14 @@ def resumen():
 
 
 if __name__ == '__main__':
-    print(f"{'MODELO':<12} {'COSTE':>8} {'VENTA':>8} {'TUYO':>8} {'MARGEN':>8}")
-    print('-' * 48)
+    print(f"{'MODELO':<12} {'COSTE':>8} {'VENTA':>8} {'IVA':>8} {'TUYO':>8} {'MARGEN':>8}")
+    print('-' * 57)
     for modelo, coste, venta, benef, pct in resumen():
-        print(f'{modelo:<12} {coste:>7.2f}€ {venta:>7.2f}€ {benef:>7.2f}€ {pct:>7.1f}%')
+        print(f'{modelo:<12} {coste:>7.2f}€ {venta:>7.2f}€ {iva_de(venta):>7.2f}€ {benef:>7.2f}€ {pct:>7.1f}%')
     fs = desglose(FUNDA['coste_compra'] - 0.50, PRECIO_FUNDA_SOLA, con_envio=False)
     fs['coste'] = round(fs['coste'] + COSTE_ENVIO_SOBRE, 2)
-    fs['beneficio'] = round(PRECIO_FUNDA_SOLA - fs['coste'] - fs['comision'], 2)
-    print('-' * 48)
-    print(f"{'Funda sola':<12} {fs['coste']:>7.2f}€ {PRECIO_FUNDA_SOLA:>7.2f}€ "
-          f"{fs['beneficio']:>7.2f}€ {fs['beneficio']/PRECIO_FUNDA_SOLA*100:>7.1f}%")
+    fs['beneficio'] = round(PRECIO_FUNDA_SOLA - fs['iva'] - fs['coste'] - fs['comision'], 2)
+    print('-' * 57)
+    print(f"{'Funda sola':<12} {fs['coste']:>7.2f}€ {PRECIO_FUNDA_SOLA:>7.2f}€ {fs['iva']:>7.2f}€ "
+          f"{fs['beneficio']:>7.2f}€ {fs['beneficio']/sin_iva(PRECIO_FUNDA_SOLA)*100:>7.1f}%")
+    print('\nMargen = beneficio sobre el precio sin IVA, antes de publicidad.')

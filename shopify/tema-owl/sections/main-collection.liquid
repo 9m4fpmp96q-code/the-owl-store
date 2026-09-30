@@ -1,0 +1,32 @@
+{%- comment -%} Página de una colección: rejilla de productos con paginación. {%- endcomment -%}
+<div class="seccion">
+  <div class="cabecera-listado">
+    <div class="section-label">{{ 'collections.label' | t }}</div>
+    <h1 class="section-title">{{ collection.title | escape }}</h1>
+    {%- if collection.description != blank -%}
+      <div class="section-sub rte">{{ collection.description }}</div>
+    {%- endif -%}
+  </div>
+
+  {%- paginate collection.products by 12 -%}
+    {%- if collection.products.size == 0 -%}
+      <p class="section-sub">{{ 'collections.empty' | t }}</p>
+    {%- else -%}
+      <div class="rejilla">
+        {%- for producto in collection.products -%}
+          {% render 'tarjeta-producto', producto: producto %}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+    {%- if paginate.pages > 1 -%}
+      <nav class="paginacion" aria-label="{{ 'general.pagination' | t }}">{{ paginate | default_pagination }}</nav>
+    {%- endif -%}
+  {%- endpaginate -%}
+</div>
+
+{% schema %}
+{
+  "name": "Colección",
+  "settings": []
+}
+{% endschema %}

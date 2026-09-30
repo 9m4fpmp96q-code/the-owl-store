@@ -1,0 +1,44 @@
+{%- comment -%}
+  Carrito lateral. Se pinta aquí con el estado inicial y después lo
+  actualiza global.js con la API de carrito de Shopify.
+  Si el cliente no tiene JavaScript, el botón del carrito lleva a /cart.
+{%- endcomment -%}
+<div class="cart-overlay js-cart-overlay"></div>
+<aside class="cart-drawer js-cart-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="{{ 'cart.title' | t }}">
+  <div class="cart-header">
+    <h2>{{ 'cart.title' | t }}</h2>
+    <button type="button" class="cart-close js-cart-close" aria-label="{{ 'general.close' | t }}">✕</button>
+  </div>
+
+  <div class="cart-items js-cart-items">
+    <div class="cart-empty js-cart-empty"{% if cart.item_count > 0 %} style="display:none"{% endif %}>
+      {% render 'icon', nombre: 'carrito', tamano: 52 %}
+      <span>{{ 'cart.empty' | t }}</span>
+    </div>
+  </div>
+
+  <div class="cart-footer">
+    <div class="cart-subtotal">
+      <span>{{ 'cart.subtotal' | t }}</span>
+      <span class="js-cart-subtotal">{{ cart.items_subtotal_price | money }}</span>
+    </div>
+    {%- if settings.cart_shipping_text != blank -%}
+      <div class="cart-subtotal">
+        <span>{{ 'cart.shipping' | t }}</span>
+        <span class="cart-envio">{{ settings.cart_shipping_text }}</span>
+      </div>
+    {%- endif -%}
+    <div class="cart-total">
+      <span>{{ 'cart.total' | t }}</span>
+      <span class="cart-total-price js-cart-total">{{ cart.total_price | money }}</span>
+    </div>
+    <form action="{{ routes.cart_url }}" method="post">
+      <button type="submit" name="checkout" class="checkout-btn js-checkout"{% if cart.item_count == 0 %} disabled{% endif %}>
+        {{ 'cart.checkout' | t }}
+      </button>
+    </form>
+    {%- if settings.cart_note_text != blank -%}
+      <p class="cart-shipping-note">{{ settings.cart_note_text }}</p>
+    {%- endif -%}
+  </div>
+</aside>

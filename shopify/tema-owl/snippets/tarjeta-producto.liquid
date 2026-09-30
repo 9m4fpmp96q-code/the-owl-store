@@ -1,0 +1,27 @@
+{%- comment -%}
+  Tarjeta de producto para colecciones y resultados de búsqueda.
+  Parámetro: producto. Sin foto, enseña la ilustración del pack.
+{%- endcomment -%}
+<a class="tarjeta" href="{{ producto.url }}">
+  <div class="tarjeta-media">
+    {%- if producto.featured_media -%}
+      {%- assign alt_tarjeta = producto.featured_media.alt | default: producto.title -%}
+      {{ producto.featured_media | image_url: width: 700 | image_tag: loading: 'lazy', widths: '350, 700', sizes: '(max-width: 600px) 50vw, 25vw', alt: alt_tarjeta }}
+    {%- else -%}
+      {% render 'ilustracion-pack' %}
+    {%- endif -%}
+  </div>
+  <h3>{{ producto.title | escape }}</h3>
+  {%- if producto.available -%}
+    {%- assign precio_min = producto.price_min | money -%}
+    <span class="tarjeta-precio">
+      {%- if producto.price_varies -%}
+        {{ 'products.from_price' | t: precio: precio_min }}
+      {%- else -%}
+        {{ precio_min }}
+      {%- endif -%}
+    </span>
+  {%- else -%}
+    <span class="tarjeta-agotado">{{ 'products.sold_out' | t }}</span>
+  {%- endif -%}
+</a>

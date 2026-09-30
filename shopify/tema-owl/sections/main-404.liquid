@@ -1,0 +1,14 @@
+{%- comment -%} Página no encontrada, como la 404 de la web original. {%- endcomment -%}
+<div class="caja-centrada">
+  <span class="emo">🦉</span>
+  <h1>{{ 'general.404_title' | t }}</h1>
+  <p>{{ 'general.404_text' | t }}</p>
+  <a class="btn-primary" href="{{ routes.root_url }}">{{ 'general.404_link' | t }}</a>
+</div>
+
+{% schema %}
+{
+  "name": "Página no encontrada",
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,17 @@
+{%- comment -%} Página de texto (contacto, información...). Mismo estilo que las páginas legales originales. {%- endcomment -%}
+<div class="pagina">
+  {%- if section.settings.label != blank -%}
+    <span class="page-label">{{ section.settings.label | escape }}</span>
+  {%- endif -%}
+  <h1>{{ page.title | escape }}</h1>
+  <div class="rte">{{ page.content }}</div>
+</div>
+
+{% schema %}
+{
+  "name": "Página",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Etiqueta sobre el título", "default": "Información" }
+  ]
+}
+{% endschema %}

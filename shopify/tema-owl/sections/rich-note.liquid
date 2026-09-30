@@ -1,0 +1,31 @@
+{%- comment -%}
+  Bloque de texto destacado. En la portada es la «Ficha técnica», que
+  explica por qué aún no se publica: no se promete lo que no está confirmado.
+{%- endcomment -%}
+{%- assign ss = section.settings -%}
+<section id="{{ ss.anchor | default: 'ficha' | handleize }}" class="seccion{% if ss.alt_background %} seccion--alt{% endif %}">
+  {%- if ss.label != blank -%}<div class="section-label">{{ ss.label | escape }}</div>{%- endif -%}
+  {%- if ss.title != blank -%}<h2 class="section-title">{{ ss.title | escape | newline_to_br }}</h2>{%- endif -%}
+  {%- if ss.subtitle != blank -%}<p class="section-sub">{{ ss.subtitle | escape }}</p>{%- endif -%}
+  {%- if ss.content != blank -%}
+    <div class="spec-nota reveal" style="margin-top:40px">{{ ss.content }}</div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Texto destacado",
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancla", "default": "ficha" },
+    { "type": "text", "id": "label", "label": "Etiqueta", "default": "Ficha técnica" },
+    { "type": "textarea", "id": "title", "label": "Título", "default": "Todavía no\nla publicamos." },
+    { "type": "text", "id": "subtitle", "label": "Subtítulo", "default": "Y es a propósito." },
+    {
+      "type": "richtext", "id": "content", "label": "Texto",
+      "default": "<p><strong>Los OWL Buds se están fabricando.</strong> Hasta que la fábrica nos confirme por escrito cada característica —chip, autonomía real medida, Bluetooth, resistencia al agua y si lleva o no cancelación activa de ruido— aquí no va a haber una tabla de datos.</p><p>Es la parte aburrida de hacerlo bien. Copiar la ficha del catálogo del proveedor antes de tener una unidad en la mano es como acaba medio internet prometiendo cancelación de ruido que el aparato no trae. Preferimos llegar unas semanas tarde y que lo que ponga aquí sea cierto.</p><p><strong>En el pack, eso sí, ya está decidido:</strong> auriculares OWL, funda OWL de silicona con el logo grabado y mosquetón de acero inoxidable.</p>"
+    },
+    { "type": "checkbox", "id": "alt_background", "label": "Fondo alternativo", "default": true }
+  ],
+  "presets": [{ "name": "Texto destacado" }]
+}
+{% endschema %}

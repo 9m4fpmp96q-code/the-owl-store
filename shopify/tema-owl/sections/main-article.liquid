@@ -1,0 +1,19 @@
+{%- comment -%} Artículo del blog. {%- endcomment -%}
+<article class="pagina">
+  <span class="page-label">{{ article.published_at | date: '%d/%m/%Y' }}</span>
+  <h1>{{ article.title | escape }}</h1>
+  {%- if article.image -%}
+    <div style="border-radius:18px;overflow:hidden;margin-bottom:32px">
+      {{ article.image | image_url: width: 1400 | image_tag: loading: 'eager', widths: '700, 1000, 1400', alt: article.title }}
+    </div>
+  {%- endif -%}
+  <div class="rte">{{ article.content }}</div>
+  <p style="margin-top:48px"><a class="btn-outline" href="{{ blog.url }}">{{ 'blogs.back' | t }}</a></p>
+</article>
+
+{% schema %}
+{
+  "name": "Artículo",
+  "settings": []
+}
+{% endschema %}

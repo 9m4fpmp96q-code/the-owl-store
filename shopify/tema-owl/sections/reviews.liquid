@@ -1,0 +1,48 @@
+{%- comment -%}
+  Reseñas. Mientras no haya una app de reseñas añadida como bloque,
+  muestra el estado vacío honesto de la web original: nunca se inventa nada.
+  Con una app (p. ej. Judge.me), se añade su bloque aquí desde el editor.
+{%- endcomment -%}
+{%- liquid
+  assign ss = section.settings
+  assign bloques_app = section.blocks | where: 'type', '@app'
+-%}
+<section id="{{ ss.anchor | default: 'resenas' | handleize }}" class="seccion{% if ss.alt_background %} seccion--alt{% endif %}">
+  {%- if ss.label != blank -%}<div class="section-label">{{ ss.label | escape }}</div>{%- endif -%}
+
+  {%- if bloques_app.size > 0 -%}
+    <h2 class="section-title">{{ ss.title_with | escape | newline_to_br }}</h2>
+    <div class="resenas-app">
+      {%- for block in section.blocks -%}
+        {%- if block.type == '@app' -%}
+          <div {{ block.shopify_attributes }}>{% render block %}</div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  {%- else -%}
+    <h2 class="section-title">{{ ss.title_empty | escape | newline_to_br }}</h2>
+    <div class="sin-resenas reveal">
+      <div class="emo">🦉</div>
+      <h3>{{ ss.empty_heading | escape }}</h3>
+      <p>{{ ss.empty_text | escape }}</p>
+    </div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Reseñas",
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancla", "default": "resenas" },
+    { "type": "text", "id": "label", "label": "Etiqueta", "default": "Opiniones" },
+    { "type": "textarea", "id": "title_empty", "label": "Título sin reseñas", "default": "Todavía\nno hay ninguna." },
+    { "type": "textarea", "id": "title_with", "label": "Título con reseñas", "default": "Lo que dicen\nquienes lo compraron." },
+    { "type": "text", "id": "empty_heading", "label": "Encabezado sin reseñas", "default": "Acabamos de abrir" },
+    { "type": "textarea", "id": "empty_text", "label": "Texto sin reseñas", "default": "No vamos a inventarnos reseñas para que esto parezca más lleno. Cuando haya clientes de verdad, sus opiniones estarán aquí — las buenas y las malas. Solo puede opinar quien ha comprado." },
+    { "type": "checkbox", "id": "alt_background", "label": "Fondo alternativo", "default": true },
+    { "type": "paragraph", "content": "Para mostrar reseñas reales, instala una app de reseñas verificadas y añade su bloque a esta sección." }
+  ],
+  "blocks": [{ "type": "@app" }],
+  "presets": [{ "name": "Reseñas" }]
+}
+{% endschema %}

@@ -1,0 +1,66 @@
+{%- comment -%}
+  Página del carrito (/cart). Normalmente se usa el carrito lateral; esta
+  página existe para quien entra directamente o no tiene JavaScript.
+{%- endcomment -%}
+<div class="carrito-pagina">
+  <h1 class="section-title">{{ 'cart.title' | t }}</h1>
+
+  {%- if cart.item_count == 0 -%}
+    <p class="section-sub">{{ 'cart.empty' | t }}</p>
+    <p style="margin-top:28px"><a class="btn-primary" href="{{ routes.root_url }}">{{ 'cart.continue' | t }}</a></p>
+  {%- else -%}
+    <form action="{{ routes.cart_url }}" method="post">
+      {%- for item in cart.items -%}
+        <div class="carrito-linea">
+          <div class="cart-item-img">
+            {%- if item.image -%}
+              {{ item.image | image_url: width: 160 | image_tag: loading: 'lazy', alt: item.product.title }}
+            {%- else -%}
+              🦉
+            {%- endif -%}
+          </div>
+          <div>
+            <a href="{{ item.url }}" class="cart-item-name">{{ item.product.title | escape }}</a>
+            {%- unless item.product.has_only_default_variant -%}
+              <div class="cart-item-sub">{{ item.variant.title | escape }}</div>
+            {%- endunless -%}
+            <a class="quitar" href="{{ item.url_to_remove }}">{{ 'cart.remove' | t }}</a>
+          </div>
+          <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" aria-label="{{ 'cart.quantity' | t }}">
+          <span class="cart-item-price">{{ item.final_line_price | money }}</span>
+        </div>
+      {%- endfor -%}
+
+      <div class="carrito-resumen">
+        <div class="cart-subtotal">
+          <span>{{ 'cart.subtotal' | t }}</span>
+          <span>{{ cart.items_subtotal_price | money }}</span>
+        </div>
+        {%- if settings.cart_shipping_text != blank -%}
+          <div class="cart-subtotal">
+            <span>{{ 'cart.shipping' | t }}</span>
+            <span class="cart-envio">{{ settings.cart_shipping_text }}</span>
+          </div>
+        {%- endif -%}
+        <div class="cart-total">
+          <span>{{ 'cart.total' | t }}</span>
+          <span class="cart-total-price">{{ cart.total_price | money }}</span>
+        </div>
+        <div class="carrito-acciones">
+          <button type="submit" name="update" class="btn-outline">{{ 'cart.update' | t }}</button>
+          <button type="submit" name="checkout" class="btn-primary">{{ 'cart.checkout' | t }}</button>
+        </div>
+        {%- if settings.cart_note_text != blank -%}
+          <p class="cart-shipping-note">{{ settings.cart_note_text }}</p>
+        {%- endif -%}
+      </div>
+    </form>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Carrito",
+  "settings": []
+}
+{% endschema %}

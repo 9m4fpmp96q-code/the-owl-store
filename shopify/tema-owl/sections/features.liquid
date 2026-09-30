@@ -1,0 +1,67 @@
+{%- comment -%} Rejilla de características: «Por qué OWL». {%- endcomment -%}
+{%- assign ss = section.settings -%}
+<section id="{{ ss.anchor | default: 'features' | handleize }}" class="seccion{% if ss.alt_background %} seccion--alt{% endif %}">
+  {%- if ss.label != blank -%}<div class="section-label">{{ ss.label | escape }}</div>{%- endif -%}
+  {%- if ss.title != blank -%}<h2 class="section-title">{{ ss.title | escape | newline_to_br }}</h2>{%- endif -%}
+  {%- if ss.text != blank -%}<p class="section-sub">{{ ss.text | escape }}</p>{%- endif -%}
+
+  {%- if section.blocks.size > 0 -%}
+    <div class="features-grid reveal">
+      {%- for block in section.blocks -%}
+        <div class="feature-card" {{ block.shopify_attributes }}>
+          <div class="feature-icon">{% render 'icon', nombre: block.settings.icon, tamano: 24 %}</div>
+          <h3>{{ block.settings.title | escape }}</h3>
+          <p>{{ block.settings.text | escape }}</p>
+        </div>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Características",
+  "max_blocks": 9,
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancla", "default": "features" },
+    { "type": "text", "id": "label", "label": "Etiqueta", "default": "Por qué OWL" },
+    { "type": "textarea", "id": "title", "label": "Título", "default": "Buen sonido.\nCon tu sello." },
+    { "type": "textarea", "id": "text", "label": "Texto", "default": "Todo lo que necesitas en un pack: auriculares inalámbricos, funda personalizada OWL y mosquetón. Sin complicaciones." },
+    { "type": "checkbox", "id": "alt_background", "label": "Fondo alternativo", "default": true }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Característica",
+      "settings": [
+        {
+          "type": "select", "id": "icon", "label": "Icono", "default": "escudo",
+          "options": [
+            { "value": "escudo", "label": "Escudo" },
+            { "value": "reloj", "label": "Reloj" },
+            { "value": "enlace", "label": "Enlace" },
+            { "value": "capas", "label": "Capas" },
+            { "value": "sonido", "label": "Sonido" },
+            { "value": "corazon", "label": "Corazón" },
+            { "value": "camion", "label": "Camión" },
+            { "value": "regalo", "label": "Regalo" },
+            { "value": "check", "label": "Visto bueno" }
+          ]
+        },
+        { "type": "text", "id": "title", "label": "Título", "default": "Característica" },
+        { "type": "textarea", "id": "text", "label": "Texto", "default": "Explica aquí por qué importa." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Características",
+      "blocks": [
+        { "type": "feature", "settings": { "icon": "escudo", "title": "Auriculares OWL", "text": "Diseñados y fabricados con nuestra marca, no revendidos." } },
+        { "type": "feature", "settings": { "icon": "reloj", "title": "Funda OWL incluida", "text": "Silicona con el logo OWL grabado." } },
+        { "type": "feature", "settings": { "icon": "enlace", "title": "Mosquetón de regalo", "text": "Clip de acero inoxidable incluido." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

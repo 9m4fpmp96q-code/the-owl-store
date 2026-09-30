@@ -1,0 +1,59 @@
+{%- comment -%}
+  Producto en la portada (la ficha de compra de la web original).
+  El producto se elige en el editor; por defecto, el de handle "pack-owl".
+{%- endcomment -%}
+{%- assign producto_destacado = section.settings.product -%}
+<section id="{{ section.settings.anchor | default: 'producto' | handleize }}" class="seccion seccion--alt" data-section="{{ section.id }}">
+  {% render 'product-detail', product: producto_destacado, section: section, es_principal: false %}
+</section>
+
+{% schema %}
+{
+  "name": "Producto destacado",
+  "max_blocks": 6,
+  "settings": [
+    { "type": "product", "id": "product", "label": "Producto" },
+    { "type": "text", "id": "anchor", "label": "Ancla", "default": "producto", "info": "Los botones «Comprar» de la web enlazan a #producto." },
+    { "type": "checkbox", "id": "show_illustration", "label": "Mostrar la ilustración en lugar de las fotos", "default": true, "info": "Desmárcalo cuando subas fotos del producto real." },
+    { "type": "text", "id": "illustration_note", "label": "Nota bajo la ilustración", "default": "Ilustración. Las fotos reales llegan con la primera producción." },
+    { "type": "inline_richtext", "id": "urgency_text", "label": "Aviso sobre el botón", "default": "Sale de nuestro almacén en <b>España</b> · lo recibes en 48 h, sin aduanas" },
+    { "type": "text", "id": "button_label", "label": "Texto del botón de compra", "default": "Comprar ahora" },
+    { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Mostrar botones de pago rápido (Apple Pay, Google Pay…)", "default": false },
+    { "type": "header", "content": "Barra de compra en el móvil" },
+    { "type": "checkbox", "id": "show_mobile_bar", "label": "Mostrar la barra", "default": true },
+    { "type": "text", "id": "mobile_bar_subtitle", "label": "Subtítulo", "default": "Pack OWL · envío gratis" },
+    { "type": "text", "id": "mobile_bar_button", "label": "Texto del botón", "default": "Comprar" }
+  ],
+  "blocks": [
+    {
+      "type": "perk",
+      "name": "Ventaja",
+      "settings": [
+        {
+          "type": "select", "id": "icon", "label": "Icono", "default": "check",
+          "options": [
+            { "value": "camion", "label": "Camión" },
+            { "value": "tarjeta", "label": "Tarjeta" },
+            { "value": "devolver", "label": "Devolución" },
+            { "value": "maletin", "label": "Maletín" },
+            { "value": "escudo", "label": "Escudo" },
+            { "value": "check", "label": "Visto bueno" },
+            { "value": "regalo", "label": "Regalo" },
+            { "value": "reloj", "label": "Reloj" }
+          ]
+        },
+        { "type": "text", "id": "text", "label": "Texto", "default": "Pago 100 % seguro" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Producto destacado",
+      "blocks": [
+        { "type": "perk", "settings": { "icon": "camion", "text": "Envío gratis · 24-48 h en España" } },
+        { "type": "perk", "settings": { "icon": "tarjeta", "text": "Pago 100 % seguro" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

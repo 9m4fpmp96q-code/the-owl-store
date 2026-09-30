@@ -1,0 +1,47 @@
+{%- comment -%}
+  Cabecera fija: logo, menú, modo oscuro, carrito y botón de compra.
+  Sin menú elegido, enlaza a las secciones de la portada como la web original.
+{%- endcomment -%}
+<header class="site-nav js-nav">
+  <a href="{{ routes.root_url }}" class="nav-logo">
+    {% render 'logo-owl' %}
+    <span>{{ section.settings.logo_text | default: shop.name | escape }}</span>
+  </a>
+
+  <ul class="nav-links">
+    {%- if section.settings.menu != blank -%}
+      {%- for link in section.settings.menu.links -%}
+        <li><a href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title | escape }}</a></li>
+      {%- endfor -%}
+    {%- else -%}
+      <li><a href="{{ routes.root_url }}#features">{{ 'header.features' | t }}</a></li>
+      <li><a href="{{ routes.root_url }}#producto">{{ 'header.buy' | t }}</a></li>
+    {%- endif -%}
+  </ul>
+
+  <div class="nav-right">
+    {%- if settings.enable_dark_mode -%}
+      <button type="button" class="theme-btn js-theme-toggle" aria-label="{{ 'general.theme_toggle' | t }}" aria-pressed="false">🌙</button>
+    {%- endif -%}
+    <a href="{{ routes.cart_url }}" class="cart-btn js-cart-open">
+      {% render 'icon', nombre: 'carrito', tamano: 18 %}
+      {{ 'cart.open' | t }}
+      <span class="cart-count js-cart-count">{{ cart.item_count }}</span>
+    </a>
+    {%- if section.settings.cta_label != blank -%}
+      <a class="nav-cta" href="{{ section.settings.cta_link | default: '/#producto' }}">{{ section.settings.cta_label | escape }}</a>
+    {%- endif -%}
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Cabecera",
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Texto del logo", "default": "OWL" },
+    { "type": "link_list", "id": "menu", "label": "Menú", "info": "Si lo dejas vacío, enlaza a «Características» y «Comprar» de la portada." },
+    { "type": "text", "id": "cta_label", "label": "Texto del botón de compra", "default": "Comprar ahora" },
+    { "type": "text", "id": "cta_link", "label": "Enlace del botón de compra", "default": "/#producto" }
+  ]
+}
+{% endschema %}

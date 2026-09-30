@@ -1,0 +1,35 @@
+{%- comment -%}
+  Etiquetas para que el enlace se vea bien al compartirlo (WhatsApp,
+  Instagram, X...). El título y la descripción salen de la configuración
+  SEO de cada página; la imagen, de la página o de la configuración del tema.
+{%- endcomment -%}
+{%- liquid
+  assign og_titulo = page_title | default: shop.name
+  assign og_url = request.origin | append: request.path
+  assign og_tipo = 'website'
+  assign og_descripcion = page_description | default: shop.description | default: shop.name
+  if request.page_type == 'product'
+    assign og_tipo = 'product'
+  endif
+  if page_image
+    assign og_imagen = page_image
+  elsif settings.social_image
+    assign og_imagen = settings.social_image
+  endif
+-%}
+<meta property="og:site_name" content="{{ shop.name | escape }}">
+<meta property="og:url" content="{{ og_url }}">
+<meta property="og:title" content="{{ og_titulo | escape }}">
+<meta property="og:type" content="{{ og_tipo }}">
+<meta property="og:description" content="{{ og_descripcion | escape }}">
+{%- if og_imagen %}
+  <meta property="og:image" content="https:{{ og_imagen | image_url: width: 1200 }}">
+  <meta property="og:image:secure_url" content="https:{{ og_imagen | image_url: width: 1200 }}">
+{%- endif %}
+{%- if request.page_type == 'product' %}
+  <meta property="og:price:amount" content="{{ product.price | money_without_currency | strip_html }}">
+  <meta property="og:price:currency" content="{{ cart.currency.iso_code }}">
+{%- endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ og_titulo | escape }}">
+<meta name="twitter:description" content="{{ og_descripcion | escape }}">

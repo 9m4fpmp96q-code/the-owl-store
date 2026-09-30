@@ -1,0 +1,145 @@
+{%- comment -%}
+  Ficha de producto: fotos (o la ilustración), precio, botón de compra,
+  ventajas y barra de compra en el móvil. La usan la portada
+  (featured-product) y la página de producto (main-product).
+
+  Parámetros:
+    product       el producto a mostrar (puede venir vacío en la portada)
+    section       la sección que la contiene (ajustes y bloques de ventajas)
+    es_principal  true en la página de producto: el título pasa a ser <h1>
+{%- endcomment -%}
+{%- liquid
+  assign ss = section.settings
+  assign variante = product.selected_or_first_available_variant
+  assign texto_comprar_def = 'products.add_to_cart' | t
+  assign texto_comprar = ss.button_label | default: texto_comprar_def
+
+  # Mientras no haya fotos del producto real se enseña la ilustración.
+  # Con fotos subidas, se desmarca "Mostrar la ilustración" en el editor.
+  assign usar_ilustracion = ss.show_illustration
+  if product == blank or product.media.size == 0
+    assign usar_ilustracion = true
+  endif
+-%}
+<div class="product-detail">
+  <div class="product-images">
+    <div class="product-main-img js-main-img{% if usar_ilustracion %} product-main-img--ilustracion{% endif %}">
+      {%- if usar_ilustracion -%}
+        {% render 'ilustracion-pack' %}
+      {%- else -%}
+        {%- assign imagen = product.featured_media.preview_image -%}
+        {%- assign alt_imagen = imagen.alt | default: product.title -%}
+        {{ imagen | image_url: width: 1400 | image_tag: loading: 'eager', widths: '600, 900, 1200, 1400', sizes: '(max-width: 900px) 100vw, 50vw', alt: alt_imagen }}
+      {%- endif -%}
+    </div>
+    {%- if usar_ilustracion and ss.illustration_note != blank -%}
+      <p class="nota-ilustracion">{{ ss.illustration_note | escape }}</p>
+    {%- endif -%}
+    {%- unless usar_ilustracion -%}
+      {%- if product.media.size > 1 -%}
+        <div class="product-thumbs-strip js-thumbs">
+          {%- for media in product.media limit: 6 -%}
+            {%- assign alt_mini = media.alt | default: product.title -%}
+            <button type="button" class="product-thumb{% if forloop.first %} active{% endif %}" data-src="{{ media.preview_image | image_url: width: 1400 }}" data-alt="{{ alt_mini | escape }}" aria-label="{{ 'products.view_image' | t: numero: forloop.index }}">
+              {{ media.preview_image | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    {%- endunless -%}
+  </div>
+
+  <div class="product-info">
+    {%- if product == blank -%}
+      <h2 class="product-name">{{ 'products.placeholder_title' | t }}</h2>
+      <p class="producto-vacio">{{ 'products.choose_product' | t }}</p>
+    {%- else -%}
+      {%- capture titulo -%}{{ product.title | escape | replace: ' — ', '<br>' }}{%- endcapture -%}
+      {%- if es_principal -%}
+        <h1 class="product-name">{{ titulo }}</h1>
+      {%- else -%}
+        <h2 class="product-name"><a href="{{ product.url }}" style="text-decoration:none">{{ titulo }}</a></h2>
+      {%- endif -%}
+
+      {%- if product.description != blank -%}
+        <div class="product-desc">{{ product.description }}</div>
+      {%- endif -%}
+
+      {%- liquid
+        assign hay_oferta = false
+        if variante.compare_at_price and variante.compare_at_price > variante.price
+          assign hay_oferta = true
+        endif
+      -%}
+      <div class="product-price-block">
+        <span class="product-price js-precio">{{ variante.price | money }}</span>
+        <s class="product-price-old js-precio-antes"{% unless hay_oferta %} hidden{% endunless %}>
+          {%- if hay_oferta %}{{ variante.compare_at_price | money }}{% endif -%}
+        </s>
+      </div>
+
+      {%- if ss.urgency_text != blank -%}
+        <div class="urgency-bar">
+          <span class="urgency-dot"></span>
+          <span>{{ ss.urgency_text }}</span>
+        </div>
+      {%- endif -%}
+
+      {%- form 'product', product, class: 'product-form js-product-form', novalidate: 'novalidate' -%}
+        {%- if product.has_only_default_variant -%}
+          <input type="hidden" name="id" value="{{ variante.id }}">
+        {%- else -%}
+          <label class="variant-label" for="Variante-{{ section.id }}">{{ product.options | join: ' / ' | escape }}</label>
+          <select id="Variante-{{ section.id }}" name="id" class="variant-select js-variant-select">
+            {%- for v in product.variants -%}
+              <option value="{{ v.id }}"{% if v.id == variante.id %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>
+                {{- v.title | escape }}{% unless v.available %} — {{ 'products.sold_out' | t }}{% endunless -%}
+              </option>
+            {%- endfor -%}
+          </select>
+        {%- endif -%}
+        <input type="hidden" name="quantity" value="1">
+
+        <button type="submit" name="add" class="add-to-cart js-add-to-cart" data-texto-comprar="{{ texto_comprar | escape }}"{% unless variante.available %} disabled{% endunless %}>
+          <span class="js-etiqueta-boton">
+            {%- if variante.available -%}
+              {{ texto_comprar | escape }} — {{ variante.price | money }}
+            {%- else -%}
+              {{ 'products.sold_out' | t }}
+            {%- endif -%}
+          </span>
+        </button>
+        <p class="form-error js-form-error" role="alert" hidden></p>
+
+        {%- if ss.show_dynamic_checkout -%}
+          {{ form | payment_button }}
+        {%- endif -%}
+      {%- endform -%}
+      <script type="application/json" class="js-variants-json">{{ product.variants | json }}</script>
+
+      {%- assign ventajas = section.blocks | where: 'type', 'perk' -%}
+      {%- if ventajas.size > 0 -%}
+        <div class="product-perks">
+          {%- for block in ventajas -%}
+            <div class="perk" {{ block.shopify_attributes }}>
+              {% render 'icon', nombre: block.settings.icon, tamano: 16 %}
+              {{ block.settings.text | escape }}
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</div>
+
+{%- if ss.show_mobile_bar and product != blank -%}
+  <div class="barra-movil js-barra-movil">
+    <div>
+      <span class="bm-precio js-precio">{{ variante.price | money }}</span>
+      <span class="bm-sub">{{ ss.mobile_bar_subtitle | escape }}</span>
+    </div>
+    <button type="button" class="js-barra-comprar"{% unless variante.available %} disabled{% endunless %}>
+      {{- ss.mobile_bar_button | default: texto_comprar | escape -}}
+    </button>
+  </div>
+{%- endif -%}

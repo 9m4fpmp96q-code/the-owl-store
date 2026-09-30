@@ -1,0 +1,33 @@
+{%- comment -%} Área de cliente: pedidos y direcciones. {%- endcomment -%}
+<div class="pagina">
+  <span class="page-label">{{ 'customer.label' | t }}</span>
+  <h1>{{ 'customer.account.title' | t }}</h1>
+  <p class="pagina-sub">{{ customer.first_name | escape }} · {{ customer.email | escape }} · <a href="{{ routes.account_logout_url }}">{{ 'customer.logout' | t }}</a></p>
+
+  <div class="rte">
+    <h2>{{ 'customer.account.orders' | t }}</h2>
+    {%- paginate customer.orders by 20 -%}
+      {%- if customer.orders.size == 0 -%}
+        <p>{{ 'customer.account.no_orders' | t }}</p>
+      {%- else -%}
+        <table>
+          <tr><th>{{ 'customer.order.number' | t }}</th><th>{{ 'customer.order.date' | t }}</th><th>{{ 'customer.order.status' | t }}</th><th>{{ 'customer.order.total' | t }}</th></tr>
+          {%- for pedido in customer.orders -%}
+            <tr>
+              <td><a href="{{ pedido.customer_url }}">{{ pedido.name }}</a></td>
+              <td>{{ pedido.created_at | date: '%d/%m/%Y' }}</td>
+              <td>{{ pedido.fulfillment_status_label }}</td>
+              <td>{{ pedido.total_price | money }}</td>
+            </tr>
+          {%- endfor -%}
+        </table>
+      {%- endif -%}
+    {%- endpaginate -%}
+
+    <h2>{{ 'customer.account.address' | t }}</h2>
+    {%- if customer.default_address -%}
+      <p>{{ customer.default_address | format_address }}</p>
+    {%- endif -%}
+    <p><a href="{{ routes.account_addresses_url }}">{{ 'customer.account.manage_addresses' | t: count: customer.addresses_count }}</a></p>
+  </div>
+</div>

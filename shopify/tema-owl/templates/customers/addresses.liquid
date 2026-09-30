@@ -1,0 +1,39 @@
+{%- comment -%} Direcciones del cliente: listado y alta de una nueva. {%- endcomment -%}
+<div class="pagina">
+  <span class="page-label"><a href="{{ routes.account_url }}">{{ 'customer.account.back' | t }}</a></span>
+  <h1>{{ 'customer.addresses.title' | t }}</h1>
+
+  <div class="rte">
+    {%- paginate customer.addresses by 10 -%}
+      {%- for direccion in customer.addresses -%}
+        <p>
+          {{ direccion | format_address }}
+          {%- if direccion == customer.default_address %}<br><strong>{{ 'customer.addresses.default' | t }}</strong>{% endif -%}
+        </p>
+        {%- form 'customer_address', direccion -%}
+          <input type="hidden" name="_method" value="delete">
+          <button type="submit" class="btn-outline" style="padding:8px 18px;font-size:13px">{{ 'customer.addresses.delete' | t }}</button>
+        {%- endform -%}
+      {%- endfor -%}
+    {%- endpaginate -%}
+
+    <h2>{{ 'customer.addresses.add' | t }}</h2>
+  </div>
+
+  {%- form 'customer_address', customer.new_address, class: 'formulario-owl' -%}
+    <div class="campo"><label for="DirNombre">{{ 'customer.first_name' | t }}</label><input type="text" id="DirNombre" name="address[first_name]" autocomplete="given-name"></div>
+    <div class="campo"><label for="DirApellidos">{{ 'customer.last_name' | t }}</label><input type="text" id="DirApellidos" name="address[last_name]" autocomplete="family-name"></div>
+    <div class="campo"><label for="DirCalle">{{ 'customer.addresses.address1' | t }}</label><input type="text" id="DirCalle" name="address[address1]" autocomplete="address-line1"></div>
+    <div class="campo"><label for="DirCiudad">{{ 'customer.addresses.city' | t }}</label><input type="text" id="DirCiudad" name="address[city]" autocomplete="address-level2"></div>
+    <div class="campo"><label for="DirCP">{{ 'customer.addresses.zip' | t }}</label><input type="text" id="DirCP" name="address[zip]" autocomplete="postal-code"></div>
+    <div class="campo">
+      <label for="DirPais">{{ 'customer.addresses.country' | t }}</label>
+      <select id="DirPais" name="address[country]" autocomplete="country">{{ all_country_option_tags }}</select>
+    </div>
+    <div class="campo"><label for="DirTelefono">{{ 'customer.addresses.phone' | t }}</label><input type="tel" id="DirTelefono" name="address[phone]" autocomplete="tel"></div>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:20px;font-size:14px">
+      <input type="checkbox" name="address[default]" value="1"> {{ 'customer.addresses.set_default' | t }}
+    </label>
+    <button type="submit" class="btn-primary">{{ 'customer.addresses.save' | t }}</button>
+  {%- endform -%}
+</div>

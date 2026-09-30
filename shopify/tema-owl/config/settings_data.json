@@ -1,0 +1,14 @@
+{
+  "current": "Default",
+  "presets": {
+    "Default": {
+      "color_ambar": "#a8641c",
+      "color_ambar_oscuro": "#d9a250",
+      "enable_dark_mode": true,
+      "cart_shipping_text": "Gratis",
+      "cart_note_text": "🔒 Pago seguro · Envío gratis · 24-48 h en España",
+      "whatsapp_message": "Hola, tengo una pregunta sobre el pack OWL 🦉",
+      "type_font": "inter_n4"
+    }
+  }
+}

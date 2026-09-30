@@ -1,0 +1,31 @@
+{%- layout none -%}
+{%- comment -%} Página de la tarjeta regalo que recibe el cliente por email. {%- endcomment -%}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ 'gift_card.title' | t }} — {{ shop.name }}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ 'favicon.svg' | asset_url }}">
+  {{ 'base.css' | asset_url | stylesheet_tag }}
+  {{ content_for_header }}
+</head>
+<body>
+  {%- assign saldo = gift_card.balance | money -%}
+  <div class="caja-centrada">
+    <span class="emo">🦉</span>
+    <h1>{{ 'gift_card.title' | t }}</h1>
+    {%- if gift_card.expired or gift_card.enabled == false -%}
+      <p>{{ 'gift_card.disabled' | t }}</p>
+    {%- else -%}
+      <p>{{ 'gift_card.balance' | t: saldo: saldo }}</p>
+      <p style="font-size:26px;font-weight:800;letter-spacing:.12em;color:var(--text)">{{ gift_card.code | format_code }}</p>
+      {%- if gift_card.expires_on -%}
+        {%- assign caduca = gift_card.expires_on | date: '%d/%m/%Y' -%}
+        <p>{{ 'gift_card.expires' | t: fecha: caduca }}</p>
+      {%- endif -%}
+    {%- endif -%}
+    <a class="btn-primary" href="{{ shop.url }}">{{ 'gift_card.shop' | t }}</a>
+  </div>
+</body>
+</html>

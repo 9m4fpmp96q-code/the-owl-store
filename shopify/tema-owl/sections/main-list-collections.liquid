@@ -1,0 +1,28 @@
+{%- comment -%} Listado de todas las colecciones. {%- endcomment -%}
+<div class="seccion">
+  <div class="cabecera-listado">
+    <h1 class="section-title">{{ 'collections.all_title' | t }}</h1>
+  </div>
+  <div class="rejilla">
+    {%- for coleccion in collections -%}
+      <a class="tarjeta" href="{{ coleccion.url }}">
+        <div class="tarjeta-media">
+          {%- if coleccion.featured_image -%}
+            {{ coleccion.featured_image | image_url: width: 700 | image_tag: loading: 'lazy', alt: coleccion.title }}
+          {%- else -%}
+            {% render 'ilustracion-pack' %}
+          {%- endif -%}
+        </div>
+        <h3>{{ coleccion.title | escape }}</h3>
+        <span class="tarjeta-precio">{{ 'collections.product_count' | t: count: coleccion.products_count }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Lista de colecciones",
+  "settings": []
+}
+{% endschema %}

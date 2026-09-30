@@ -1,0 +1,17 @@
+{
+  "type": "footer",
+  "name": "Pie de página",
+  "sections": {
+    "pie": {
+      "type": "footer",
+      "blocks": {
+        "producto": { "type": "column", "settings": { "heading": "Producto", "default_links": "producto" } },
+        "soporte": { "type": "column", "settings": { "heading": "Soporte", "default_links": "soporte" } },
+        "legal": { "type": "column", "settings": { "heading": "Legal", "default_links": "legal" } }
+      },
+      "block_order": ["producto", "soporte", "legal"],
+      "settings": {}
+    }
+  },
+  "order": ["pie"]
+}

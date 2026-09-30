@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="canonical" href="{{ canonical_url }}">
+
+  {%- comment -%}
+    El tema elegido se aplica antes de pintar nada: si se hace después,
+    quien usa el modo oscuro ve un destello blanco en cada página.
+  {%- endcomment -%}
+  <script>
+    document.documentElement.classList.add('js');
+    try { if (localStorage.getItem('owl-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+  </script>
+
+  {%- if settings.favicon != blank -%}
+    <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 64, height: 64 }}">
+  {%- else -%}
+    <link rel="icon" type="image/svg+xml" href="{{ 'favicon.svg' | asset_url }}">
+  {%- endif -%}
+
+  {%- capture titulo_seo -%}
+    {{ page_title }}
+    {%- if current_tags %} — {{ current_tags | join: ', ' }}{% endif -%}
+    {%- if current_page != 1 %} — {{ 'general.page' | t: page: current_page }}{% endif -%}
+    {%- unless page_title contains shop.name %} — {{ shop.name }}{% endunless -%}
+  {%- endcapture -%}
+  <title>{{ titulo_seo | strip }}</title>
+  {%- if page_description %}
+    <meta name="description" content="{{ page_description | escape }}">
+  {%- endif %}
+
+  {% render 'meta-tags' %}
+
+  {%- comment -%}
+    La fuente se sirve desde el CDN de Shopify (más rápido y sin enviar la IP
+    del visitante a Google). Se elige en Configuración del tema → Tipografía.
+  {%- endcomment -%}
+  {%- liquid
+    assign fuente = settings.type_font
+    assign fuente_500 = fuente | font_modify: 'weight', '500'
+    assign fuente_600 = fuente | font_modify: 'weight', '600'
+    assign fuente_700 = fuente | font_modify: 'weight', '700'
+    assign fuente_800 = fuente | font_modify: 'weight', '800'
+    assign fuente_900 = fuente | font_modify: 'weight', '900'
+  -%}
+  {{ fuente | font_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+  <style>
+    {{ fuente | font_face: font_display: 'swap' }}
+    {{ fuente_500 | font_face: font_display: 'swap' }}
+    {{ fuente_600 | font_face: font_display: 'swap' }}
+    {{ fuente_700 | font_face: font_display: 'swap' }}
+    {{ fuente_800 | font_face: font_display: 'swap' }}
+    {{ fuente_900 | font_face: font_display: 'swap' }}
+    :root { --fuente: {{ fuente.family }}, {{ fuente.fallback_families }}; }
+  </style>
+
+  {{ 'base.css' | asset_url | stylesheet_tag }}
+  <style>
+    :root { --ambar: {{ settings.color_ambar }}; }
+    [data-theme="dark"] { --ambar: {{ settings.color_ambar_oscuro }}; }
+  </style>
+
+  <script>
+    window.OWL = {
+      carrito: {{ cart | json }},
+      formatoDinero: {{ shop.money_format | json }},
+      rutas: {
+        carrito: {{ routes.cart_url | json }},
+        carritoAnadir: {{ routes.cart_add_url | json }},
+        carritoCambiar: {{ routes.cart_change_url | json }}
+      },
+      textos: {
+        anadido: {{ 'cart.added' | t | json }},
+        agotado: {{ 'products.sold_out' | t | json }},
+        errorCarrito: {{ 'cart.error' | t | json }},
+        aumentar: {{ 'cart.increase' | t | json }},
+        reducir: {{ 'cart.decrease' | t | json }},
+        quitar: {{ 'cart.remove' | t | json }}
+      }
+    };
+  </script>
+  <script src="{{ 'global.js' | asset_url }}" defer></script>
+
+  {{ content_for_header }}
+</head>
+
+<body class="plantilla-{{ template.name }}">
+  <a class="skip-link" href="#contenido">{{ 'general.skip_to_content' | t }}</a>
+
+  {% render 'ilustracion-pack', simbolo: true %}
+  {% render 'whatsapp' %}
+
+  {% sections 'header-group' %}
+
+  {% render 'cart-drawer' %}
+
+  <main id="contenido" class="contenido contenido--{{ template.name }}" role="main" tabindex="-1">
+    {{ content_for_layout }}
+  </main>
+
+  {% sections 'footer-group' %}
+</body>
+</html>

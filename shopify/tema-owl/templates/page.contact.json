@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "principal": {
+      "type": "main-page",
+      "settings": {
+        "label": "Soporte"
+      }
+    },
+    "formulario": {
+      "type": "contact-form",
+      "settings": {}
+    }
+  },
+  "order": [
+    "principal",
+    "formulario"
+  ]
+}

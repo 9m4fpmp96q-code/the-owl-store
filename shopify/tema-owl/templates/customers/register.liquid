@@ -1,0 +1,28 @@
+{%- comment -%} Crear cuenta de cliente (cuentas clásicas). {%- endcomment -%}
+<div class="pagina">
+  <span class="page-label">{{ 'customer.label' | t }}</span>
+  <h1>{{ 'customer.register.title' | t }}</h1>
+
+  {%- form 'create_customer', class: 'formulario-owl' -%}
+    {%- if form.errors -%}
+      <div class="aviso-form aviso-form--error" role="alert">{{ form.errors | default_errors }}</div>
+    {%- endif -%}
+    <div class="campo">
+      <label for="RegNombre">{{ 'customer.first_name' | t }}</label>
+      <input type="text" id="RegNombre" name="customer[first_name]" autocomplete="given-name">
+    </div>
+    <div class="campo">
+      <label for="RegApellidos">{{ 'customer.last_name' | t }}</label>
+      <input type="text" id="RegApellidos" name="customer[last_name]" autocomplete="family-name">
+    </div>
+    <div class="campo">
+      <label for="RegEmail">{{ 'customer.email' | t }}</label>
+      <input type="email" id="RegEmail" name="customer[email]" autocomplete="email" required>
+    </div>
+    <div class="campo">
+      <label for="RegPassword">{{ 'customer.password' | t }}</label>
+      <input type="password" id="RegPassword" name="customer[password]" autocomplete="new-password" required>
+    </div>
+    <button type="submit" class="btn-primary">{{ 'customer.register.submit' | t }}</button>
+  {%- endform -%}
+</div>
