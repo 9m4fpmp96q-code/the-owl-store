@@ -12,6 +12,8 @@ con el mismo diseño. La web actual sigue funcionando en Render hasta el
 | `tema-owl/` | El código del tema (lo mismo que el .zip, sin comprimir). |
 | `productos.csv` | Los 3 productos para importar: el pack (activo) y las fundas (borrador). |
 | `imagenes/pack-owl.png` | Imagen del pack (la ilustración, 2048 × 2048) para la ficha del producto. |
+| `imagenes/logo-owl-horizontal.png` | Logo con el texto «OWL» (fondo transparente) para la pantalla de pago. |
+| `imagenes/logo-owl-icono.png` | El búho solo, 1024 × 1024, para el icono de la tienda y las redes. |
 | `politicas/` | Textos legales adaptados a Shopify, listos para pegar. |
 
 ## Lo que hace el tema
@@ -115,8 +117,10 @@ europea (1,14 € por pack). Actualiza `STRIPE_PCT` y `STRIPE_FIJO` en
 cookies** para la UE/EEE y Reino Unido. La política de privacidad ya lo explica.
 
 ### 11. Pantalla de pago y emails
-- **Configuración → Pantalla de pago**: sube el logo (usa `assets/favicon.svg`
-  convertido a PNG) y pon el negro `#111111` como color principal.
+- **Configuración → Pantalla de pago**: sube `imagenes/logo-owl-horizontal.png`
+  como logo y pon el negro `#111111` como color principal.
+- **Configuración → Marca**: sube `imagenes/logo-owl-icono.png` como logotipo
+  cuadrado (lo usan la app Shop, los emails y las redes).
 - **Configuración → Notificaciones**: revisa el email de confirmación de pedido
   (Shopify ya lo trae en español).
 
