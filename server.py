@@ -639,7 +639,10 @@ def create_checkout():
         payment_method_types=['card'],
         line_items=line_items,
         mode='payment',
-        shipping_address_collection={'allowed_countries': ['ES','FR','DE','IT','PT','BE','NL','AT','PL','GB']},
+        # Los países salen del catálogo. Es el único sitio donde se
+        # decide a dónde se envía, y aquí es donde se hace cumplir:
+        # el cliente no puede ni elegir un país al que no servimos.
+        shipping_address_collection={'allowed_countries': catalogo.PAISES_ENVIO},
         customer_email=data.get('email'),
         metadata={'items': meta_models},
         success_url=os.getenv('BASE_URL') + '/success?session_id={CHECKOUT_SESSION_ID}',

@@ -10,7 +10,25 @@ se cierre proveedor.
 
 # ── COSTES FIJOS POR PEDIDO ───────────────────────────────────────────────────
 COSTE_PACKAGING   = 0.80   # caja + etiqueta
-COSTE_ENVIO       = 3.50   # envío nacional desde almacén España
+
+# ── DÓNDE SE ENVÍA ────────────────────────────────────────────────────────────
+# Solo España y Portugal, decidido el 2026-10-20. Sirviendo los pedidos desde
+# casa, un paquete a Alemania o Polonia cuesta 10-15 € en ventanilla: con 19 €
+# de beneficio por pack, el envío "gratis" se comía la mitad. Se abre Europa
+# cuando haya volumen para negociar con un transportista.
+#
+# Esta lista manda también en Stripe: es la que limita los países que el
+# cliente puede elegir al pagar. Tocarla aquí lo cambia en los dos sitios.
+PAISES_ENVIO = ['ES', 'PT']
+
+COSTE_ENVIO_POR_PAIS = {
+    'ES': 3.50,   # Paq Estándar nacional con plataforma
+    'PT': 5.90,   # península portuguesa
+}
+
+# El coste de referencia para calcular márgenes es el peor de los que servimos:
+# mejor que el margen real sorprenda hacia arriba y no hacia abajo.
+COSTE_ENVIO = max(COSTE_ENVIO_POR_PAIS.values())
 STRIPE_PCT        = 0.015  # 1,5 % tarjetas del EEE
 STRIPE_FIJO       = 0.25
 TASA_DEVOLUCIONES = 0.08   # 8 % de pedidos que vuelven o fallan
